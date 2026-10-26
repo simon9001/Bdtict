@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: light --default;
+}
+
+/*
+ * Chart colour tokens - validated with the dataviz palette checker against the
+ * white card surface (see src/components/charts/chartTheme.ts for usage).
+ */
+:root {
+  --series-1: #2a78d6; /* blue   */
+  --series-2: #eb6834; /* orange */
+  --series-3: #1baf7a; /* aqua   */
+  --series-4: #eda100; /* yellow */
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #898781;
+}
+
+body {
+  @apply bg-gray-50 text-gray-800;
+}
+
+/* Square checkboxes so they never look like radio buttons */
+.checkbox {
+  border-radius: 0.25rem;
+}
+
+/* Numbers that line up in table columns */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
