@@ -19,7 +19,7 @@ const DashboardFilterBar: React.FC<DashboardFilterBarProps> = ({ categoryId, own
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm">
             <span className="text-sm font-medium text-gray-600">Filter:</span>
             <select
-                className="select select-sm w-52 border-gray-300"
+                className="select select-sm w-full border-gray-300 sm:w-52"
                 value={categoryId ?? ''}
                 onChange={(e) => onChange({ categoryId: toId(e.target.value), ownerId })}
                 aria-label="Category"
@@ -28,7 +28,7 @@ const DashboardFilterBar: React.FC<DashboardFilterBarProps> = ({ categoryId, own
                 {categories.map((c) => <option key={c.lookup_id} value={c.lookup_id}>{c.value}</option>)}
             </select>
             <select
-                className="select select-sm w-52 border-gray-300"
+                className="select select-sm w-full border-gray-300 sm:w-52"
                 value={ownerId ?? ''}
                 onChange={(e) => onChange({ categoryId, ownerId: toId(e.target.value) })}
                 aria-label="Officer"

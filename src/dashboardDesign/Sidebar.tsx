@@ -59,37 +59,44 @@ const NAV_GROUPS: NavGroup[] = [
 ]
 
 interface SidebarProps {
-    open: boolean          // mobile drawer state
-    onNavigate: () => void // closes the drawer after a click on mobile
+    drawerOpen: boolean    // small screens: is the drawer showing
+    collapsed: boolean     // large screens: icons only
+    onNavigate: () => void // closes the drawer after a click on small screens
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ open, onNavigate }) => {
+// The "lg:" classes keep "collapsed" from affecting the small-screen drawer,
+// which always shows full labels.
+const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, collapsed, onNavigate }) => {
     const user = useCurrentUser()
     const groups = NAV_GROUPS.filter((group) => !group.adminOnly || user?.role === 'admin')
 
     return (
         <aside
-            className={`fixed bottom-0 left-0 top-16 z-40 w-64 overflow-y-auto border-r border-gray-200 bg-white shadow-sm transition-transform duration-300 lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+            className={`fixed bottom-0 left-0 top-16 z-40 w-64 overflow-y-auto overflow-x-hidden border-r border-gray-200 bg-white shadow-sm transition-[width,transform] duration-300 lg:translate-x-0 ${drawerOpen ? 'translate-x-0' : '-translate-x-full'} ${collapsed ? 'lg:w-16' : ''}`}
         >
-            <nav className="space-y-5 p-4">
-                {groups.map((group) => (
+            <nav className={`space-y-5 p-4 ${collapsed ? 'lg:space-y-3 lg:px-2' : ''}`}>
+                {groups.map((group, index) => (
                     <div key={group.title}>
-                        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{group.title}</p>
+                        <p className={`mb-1 whitespace-nowrap px-3 text-xs font-semibold uppercase tracking-wide text-gray-400 ${collapsed ? 'lg:hidden' : ''}`}>{group.title}</p>
+                        {/* Icons only: a thin line replaces the group title */}
+                        {collapsed && index > 0 && <hr className="mb-3 hidden border-gray-200 lg:block" />}
                         <div className="space-y-1">
                             {group.items.map(({ name, path, icon: Icon }) => (
                                 <NavLink
                                     key={path}
                                     to={path}
                                     onClick={onNavigate}
+                                    title={collapsed ? name : undefined}
+                                    aria-label={name}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${isActive
+                                        `flex items-center gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive
                                             ? 'bg-green-800 text-white shadow-md'
                                             : 'text-gray-600 hover:bg-gray-100 hover:text-green-800'
                                         }`
                                     }
                                 >
                                     <Icon size={18} className="shrink-0" aria-hidden />
-                                    {name}
+                                    <span className={collapsed ? 'lg:hidden' : ''}>{name}</span>
                                 </NavLink>
                             ))}
                         </div>

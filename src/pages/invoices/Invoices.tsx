@@ -46,17 +46,17 @@ const Invoices: React.FC = () => {
             />
 
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-sm">
-                <form className="join" onSubmit={(e) => { e.preventDefault(); filters.setFilters({ search: searchText.trim() }) }}>
-                    <input className="input input-sm join-item w-56 border-gray-300" placeholder="Invoice no. or supplier"
+                <form className="join w-full sm:w-auto" onSubmit={(e) => { e.preventDefault(); filters.setFilters({ search: searchText.trim() }) }}>
+                    <input className="input input-sm join-item w-full border-gray-300 sm:w-56" placeholder="Invoice no. or supplier"
                         value={searchText} onChange={(e) => setSearchText(e.target.value)} aria-label="Search" />
                     <button className="btn btn-sm join-item" aria-label="Search"><Search size={16} /></button>
                 </form>
-                <select className="select select-sm w-40 border-gray-300" value={filters.getString('status') ?? ''} aria-label="Status"
+                <select className="select select-sm w-full border-gray-300 sm:w-40" value={filters.getString('status') ?? ''} aria-label="Status"
                     onChange={(e) => filters.setFilters({ status: e.target.value })}>
                     <option value="">All statuses</option>
                     {INVOICE_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <select className="select select-sm w-48 border-gray-300" value={filters.getNumber('owner_id') ?? ''} aria-label="Officer"
+                <select className="select select-sm w-full border-gray-300 sm:w-48" value={filters.getNumber('owner_id') ?? ''} aria-label="Officer"
                     onChange={(e) => filters.setFilters({ owner_id: e.target.value })}>
                     <option value="">All officers</option>
                     {staff.map((u) => <option key={u.user_id} value={u.user_id}>{u.full_name}</option>)}
@@ -78,9 +78,9 @@ const Invoices: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th>Invoice</th>
-                                    <th>Supplier / contract</th>
-                                    <th>Received</th>
-                                    <th className="text-right">Amount</th>
+                                    <th className="hidden md:table-cell">Supplier / contract</th>
+                                    <th className="hidden sm:table-cell">Received</th>
+                                    <th className="hidden lg:table-cell text-right">Amount</th>
                                     <th className="text-right">Balance</th>
                                     <th>Status</th>
                                 </tr>
@@ -88,12 +88,15 @@ const Invoices: React.FC = () => {
                             <tbody>
                                 {rows.map((i) => (
                                     <tr key={i.invoice_id} className="cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/invoices/${i.invoice_id}`)}>
-                                        <td className="font-medium text-gray-900">{i.invoice_number}</td>
-                                        <td className="max-w-xs">
+                                        <td className="max-w-[10rem] font-medium text-gray-900 md:max-w-none">
+                                            {i.invoice_number}
+                                            <p className="truncate text-xs font-normal text-gray-500 md:hidden">{i.supplier_name}</p>
+                                        </td>
+                                        <td className="hidden md:table-cell max-w-xs">
                                             <p className="truncate text-sm text-gray-900">{i.supplier_name}</p>
                                             <p className="truncate text-xs text-gray-500">{i.contract_number}</p>
                                         </td>
-                                        <td className="whitespace-nowrap text-sm">
+                                        <td className="hidden sm:table-cell whitespace-nowrap text-sm">
                                             {formatDate(i.received_date)}
                                             {i.age_days != null && (
                                                 <p className={`text-xs ${i.age_days > 60 ? 'text-red-700' : i.age_days > 30 ? 'text-amber-700' : 'text-gray-500'}`}>
@@ -101,7 +104,7 @@ const Invoices: React.FC = () => {
                                                 </p>
                                             )}
                                         </td>
-                                        <td className="tabular text-right">{formatMoney(i.amount)}</td>
+                                        <td className="hidden lg:table-cell tabular text-right">{formatMoney(i.amount)}</td>
                                         <td className="tabular text-right font-medium">{formatMoney(i.balance)}</td>
                                         <td><StatusBadge status={i.status} /></td>
                                     </tr>

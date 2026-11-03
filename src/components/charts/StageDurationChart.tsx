@@ -1,6 +1,7 @@
 import React from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { dashboardApi } from '../../features/api/DashboardApi'
+import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { DashboardFilters, StageDuration } from '../../types/Types'
 import ChartCard, { type TableColumn } from './ChartCard'
 import ChartTooltip from './ChartTooltip'
@@ -31,7 +32,8 @@ const TargetTick = (props: { x?: number; y?: number; width?: number; height?: nu
 const StageDurationChart: React.FC<{ filters: DashboardFilters; className?: string }> = ({ filters, className }) => {
     const { data, isLoading, error } = dashboardApi.useGetStageDurationsQuery(filters)
     const rows = (data?.data ?? []).filter((stage) => stage.samples > 0)
-    const height = Math.max(200, rows.length * 36 + 40)
+    const small = useIsSmallScreen()
+    const height = Math.max(200, rows.length * (small ? 52 : 36) + 40)
 
     return (
         <ChartCard
@@ -56,7 +58,7 @@ const StageDurationChart: React.FC<{ filters: DashboardFilters; className?: stri
                     <CartesianGrid horizontal={false} stroke={CHROME.grid} />
                     <XAxis type="number" allowDecimals={false} tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} unit=" d" />
                     {/* Two category axes on the same rows let the target tick overlay the bar */}
-                    <YAxis yAxisId="bars" type="category" dataKey="stage_name" width={190} tick={tickStyle} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="bars" type="category" dataKey="stage_name" width={small ? 96 : 190} tick={tickStyle} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="targets" type="category" dataKey="stage_name" hide />
                     <Tooltip
                         cursor={{ fill: 'rgba(0,0,0,0.04)' }}

@@ -50,22 +50,22 @@ const Contracts: React.FC = () => {
             />
 
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-sm">
-                <form className="join" onSubmit={(e) => { e.preventDefault(); filters.setFilters({ search: searchText.trim() }) }}>
-                    <input className="input input-sm join-item w-56 border-gray-300" placeholder="Contract no. or supplier"
+                <form className="join w-full sm:w-auto" onSubmit={(e) => { e.preventDefault(); filters.setFilters({ search: searchText.trim() }) }}>
+                    <input className="input input-sm join-item w-full border-gray-300 sm:w-56" placeholder="Contract no. or supplier"
                         value={searchText} onChange={(e) => setSearchText(e.target.value)} aria-label="Search" />
                     <button className="btn btn-sm join-item" aria-label="Search"><Search size={16} /></button>
                 </form>
-                <select className="select select-sm w-40 border-gray-300" value={filters.getString('status') ?? ''} aria-label="Status"
+                <select className="select select-sm w-full border-gray-300 sm:w-40" value={filters.getString('status') ?? ''} aria-label="Status"
                     onChange={(e) => filters.setFilters({ status: e.target.value })}>
                     <option value="">All statuses</option>
                     {CONTRACT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <select className="select select-sm w-48 border-gray-300" value={filters.getNumber('owner_id') ?? ''} aria-label="Officer"
+                <select className="select select-sm w-full border-gray-300 sm:w-48" value={filters.getNumber('owner_id') ?? ''} aria-label="Officer"
                     onChange={(e) => filters.setFilters({ owner_id: e.target.value })}>
                     <option value="">All officers</option>
                     {staff.map((u) => <option key={u.user_id} value={u.user_id}>{u.full_name}</option>)}
                 </select>
-                <select className="select select-sm w-48 border-gray-300" value={expiring ?? ''} aria-label="Expiring"
+                <select className="select select-sm w-full border-gray-300 sm:w-48" value={expiring ?? ''} aria-label="Expiring"
                     onChange={(e) => filters.setFilters({ expiring_within_days: e.target.value })}>
                     <option value="">Any end date</option>
                     <option value="30">Ending within 30 days</option>
@@ -84,21 +84,21 @@ const Contracts: React.FC = () => {
                             <thead>
                                 <tr>
                                     <th>Supplier / contract</th>
-                                    <th>Period</th>
+                                    <th className="hidden md:table-cell">Period</th>
                                     <th className="text-right">Value</th>
-                                    <th className="text-right">Invoiced</th>
-                                    <th className="text-right">Paid</th>
+                                    <th className="hidden lg:table-cell text-right">Invoiced</th>
+                                    <th className="hidden md:table-cell text-right">Paid</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {rows.map((c) => (
                                     <tr key={c.contract_id} className="cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/contracts/${c.contract_id}`)}>
-                                        <td className="max-w-xs">
+                                        <td className="max-w-[11rem] sm:max-w-xs">
                                             <p className="truncate font-medium text-gray-900">{c.supplier_name}</p>
                                             <p className="truncate text-xs text-gray-500">{c.contract_number} · {c.procurement_title}</p>
                                         </td>
-                                        <td className="whitespace-nowrap text-sm">
+                                        <td className="hidden md:table-cell whitespace-nowrap text-sm">
                                             {formatDate(c.start_date)} – {formatDate(c.end_date)}
                                             {c.status === 'Active' && c.days_to_expiry <= 90 && (
                                                 <p className={`text-xs ${c.days_to_expiry <= 30 ? 'text-red-700' : 'text-amber-700'}`}>
@@ -107,8 +107,8 @@ const Contracts: React.FC = () => {
                                             )}
                                         </td>
                                         <td className="tabular text-right font-medium">{formatMoney(c.contract_value)}</td>
-                                        <td className="tabular text-right">{formatMoney(c.invoiced_amount)}</td>
-                                        <td className="tabular text-right">{formatMoney(c.paid_amount)}</td>
+                                        <td className="hidden lg:table-cell tabular text-right">{formatMoney(c.invoiced_amount)}</td>
+                                        <td className="hidden md:table-cell tabular text-right">{formatMoney(c.paid_amount)}</td>
                                         <td><StatusBadge status={c.status} /></td>
                                     </tr>
                                 ))}

@@ -97,7 +97,7 @@ const ProcurementDetail: React.FC = () => {
                         {p.reference && <span className="text-sm text-gray-500">{p.reference}</span>}
                     </div>
                     <h1 className="mt-2 text-2xl font-bold text-gray-900">{p.title}</h1>
-                    <div className="mt-2 flex items-center gap-3 text-sm text-gray-600">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
                         <span>Current step: <strong className="text-gray-900">{p.current_stage_name ?? 'Not started'}</strong></span>
                         {p.days_in_stage != null && <span>· {p.days_in_stage} days (target {p.sla_days})</span>}
                         <ProgressBar value={p.progress_percent} />

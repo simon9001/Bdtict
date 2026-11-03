@@ -71,13 +71,13 @@ const Tasks: React.FC = () => {
             />
 
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-sm">
-                <select className="select select-sm w-44 border-gray-300" value={status ?? (showAll ? 'all' : '')} aria-label="Status"
+                <select className="select select-sm w-full border-gray-300 sm:w-44" value={status ?? (showAll ? 'all' : '')} aria-label="Status"
                     onChange={(e) => filters.setFilters({ status: ['', 'all'].includes(e.target.value) ? undefined : e.target.value, all: e.target.value === 'all' })}>
                     <option value="">Open tasks</option>
                     <option value="all">All tasks</option>
                     {TASK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <select className="select select-sm w-48 border-gray-300" value={filters.getNumber('owner_id') ?? ''} aria-label="Assigned to"
+                <select className="select select-sm w-full border-gray-300 sm:w-48" value={filters.getNumber('owner_id') ?? ''} aria-label="Assigned to"
                     onChange={(e) => filters.setFilters({ owner_id: e.target.value, mine: undefined })}>
                     <option value="">Everyone</option>
                     {staff.map((u) => <option key={u.user_id} value={u.user_id}>{u.full_name}</option>)}
@@ -101,25 +101,30 @@ const Tasks: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="table">
                             <thead>
-                                <tr><th>Task</th><th>Assigned to</th><th>Due</th><th>Status</th><th /></tr>
+                                <tr><th>Task</th><th className="hidden md:table-cell">Assigned to</th><th className="hidden sm:table-cell">Due</th><th className="hidden sm:table-cell">Status</th><th /></tr>
                             </thead>
                             <tbody>
                                 {rows.map((task) => {
                                     const editable = canEditOwned(user, task.owner_id)
                                     return (
                                         <tr key={task.task_id} className="hover:bg-gray-50">
-                                            <td className="max-w-md">
+                                            <td className="max-w-[13rem] sm:max-w-md">
                                                 <p className="font-medium text-gray-900">{task.title}</p>
+                                                {/* Status and due date have their own columns on wider screens */}
+                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:hidden">
+                                                    <StatusBadge status={task.status} />
+                                                    {task.due_date && <span className={task.is_overdue ? 'font-semibold text-red-700' : 'text-gray-500'}>Due {formatDate(task.due_date)}</span>}
+                                                </div>
                                                 {task.procurement_id && (
                                                     <Link to={`/procurements/${task.procurement_id}`} className="text-xs text-green-800 hover:underline">{task.procurement_title}</Link>
                                                 )}
                                                 {task.description && <p className="truncate text-xs text-gray-500">{task.description}</p>}
                                             </td>
-                                            <td className="whitespace-nowrap text-sm">{task.owner_name}</td>
-                                            <td className={`whitespace-nowrap text-sm ${task.is_overdue ? 'font-semibold text-red-700' : ''}`}>
+                                            <td className="hidden md:table-cell whitespace-nowrap text-sm">{task.owner_name}</td>
+                                            <td className={`hidden sm:table-cell whitespace-nowrap text-sm ${task.is_overdue ? 'font-semibold text-red-700' : ''}`}>
                                                 {formatDate(task.due_date)}{task.is_overdue && ' · overdue'}
                                             </td>
-                                            <td><StatusBadge status={task.status} /></td>
+                                            <td className="hidden sm:table-cell"><StatusBadge status={task.status} /></td>
                                             <td className="whitespace-nowrap text-right">
                                                 {editable && (
                                                     <>

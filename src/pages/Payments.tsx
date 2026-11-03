@@ -39,7 +39,7 @@ const Payments: React.FC = () => {
                         onChange={(e) => filters.setFilters({ paid_to: e.target.value })} />
                 </label>
                 {filters.hasFilters && <button className="btn btn-ghost btn-sm" onClick={filters.clearFilters}>Clear</button>}
-                <div className="ml-auto text-sm text-gray-600">
+                <div className="w-full text-sm text-gray-600 sm:ml-auto sm:w-auto">
                     Total for selection: <strong className="tabular text-lg text-gray-900">{formatMoney(data?.summary.total_amount ?? 0)}</strong>
                 </div>
             </div>
@@ -51,20 +51,20 @@ const Payments: React.FC = () => {
                     <div className="overflow-x-auto">
                         <table className="table">
                             <thead>
-                                <tr><th>Date</th><th>Supplier</th><th>Invoice</th><th>Reference</th><th className="text-right">Amount</th><th>Recorded by</th></tr>
+                                <tr><th>Date</th><th>Supplier</th><th className="hidden md:table-cell">Invoice</th><th className="hidden lg:table-cell">Reference</th><th className="text-right">Amount</th><th className="hidden lg:table-cell">Recorded by</th></tr>
                             </thead>
                             <tbody>
                                 {rows.map((pay) => (
                                     <tr key={pay.payment_id} className="hover:bg-gray-50">
                                         <td className="whitespace-nowrap">{formatDate(pay.payment_date)}</td>
-                                        <td className="max-w-xs">
+                                        <td className="max-w-[9rem] sm:max-w-xs">
                                             <p className="truncate text-gray-900">{pay.supplier_name}</p>
                                             <p className="truncate text-xs text-gray-500">{pay.procurement_title}</p>
                                         </td>
-                                        <td><Link className="text-green-800 hover:underline" to={`/invoices/${pay.invoice_id}`}>{pay.invoice_number}</Link></td>
-                                        <td>{pay.reference ?? '—'}</td>
+                                        <td className="hidden md:table-cell"><Link className="text-green-800 hover:underline" to={`/invoices/${pay.invoice_id}`}>{pay.invoice_number}</Link></td>
+                                        <td className="hidden lg:table-cell">{pay.reference ?? '—'}</td>
                                         <td className="tabular text-right font-medium">{formatMoney(pay.amount)}</td>
-                                        <td className="text-sm">{pay.created_by_name}</td>
+                                        <td className="hidden lg:table-cell text-sm">{pay.created_by_name}</td>
                                     </tr>
                                 ))}
                             </tbody>

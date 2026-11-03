@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { dashboardApi } from '../../features/api/DashboardApi'
+import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { DashboardFilters, PipelineStage } from '../../types/Types'
 import { formatNumber } from '../../utils/format'
 import ChartCard, { type TableColumn } from './ChartCard'
@@ -31,7 +32,8 @@ const PipelineChart: React.FC<{ filters: DashboardFilters; className?: string }>
     const rows: Row[] = (data?.data ?? [])
         .filter((stage) => stage.items > 0)
         .map((stage) => ({ ...stage, on_track: stage.items - stage.overdue }))
-    const height = Math.max(200, rows.length * 36 + 60)
+    const small = useIsSmallScreen()
+    const height = Math.max(200, rows.length * (small ? 52 : 36) + 60)
 
     const openStage = (row: Row) => {
         if (row.stage_id) navigate(`/procurements?stage_id=${row.stage_id}`)
@@ -54,7 +56,7 @@ const PipelineChart: React.FC<{ filters: DashboardFilters; className?: string }>
                 <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }} barCategoryGap="28%">
                     <CartesianGrid horizontal={false} stroke={CHROME.grid} />
                     <XAxis type="number" allowDecimals={false} tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} />
-                    <YAxis type="category" dataKey="stage_name" width={190} tick={tickStyle} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="stage_name" width={small ? 96 : 190} tick={tickStyle} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={(v) => formatNumber(v)} />} />
                     <Legend verticalAlign="top" align="left" iconType="square" height={32} formatter={legendText} itemSorter={null} />
                     {/* 2px white stroke = surface gap between the stacked segments */}

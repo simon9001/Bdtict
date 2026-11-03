@@ -10,7 +10,7 @@ interface StageProgressProps {
 
 /**
  * The whole procurement process at a glance, grouped by phase:
- *   ✓ steps already passed · ◉ the current step · ○ steps still to come
+ *   check mark = step passed, dot = current step, empty circle = still to come
  * State is shown by icon AND text weight, not colour alone.
  */
 const StageProgress: React.FC<StageProgressProps> = ({ stages, currentStageId, isCompleted }) => {

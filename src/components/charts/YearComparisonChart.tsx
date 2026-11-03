@@ -41,7 +41,7 @@ const YearComparisonChart: React.FC<{ filters: Omit<DashboardFilters, 'fy_id'>; 
             <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barGap={2} barCategoryGap="28%">
                     <CartesianGrid vertical={false} stroke={CHROME.grid} />
-                    <XAxis dataKey="fy_code" tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} tickFormatter={(code) => `FY ${code}`} />
+                    <XAxis dataKey="fy_code" interval={0} tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} tickFormatter={(code) => `FY ${code}`} />
                     <YAxis tickFormatter={formatMoneyCompact} tick={tickStyle} axisLine={false} tickLine={false} width={80} />
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
                     <Legend verticalAlign="top" align="left" iconType="square" height={32} formatter={legendText} itemSorter={null} />

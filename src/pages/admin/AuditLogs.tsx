@@ -40,7 +40,7 @@ const DataChanges: React.FC = () => {
     return (
         <div className="rounded-lg bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-gray-100 p-3">
-                <select className="select select-sm w-52 border-gray-300" value={entity} onChange={(e) => { setEntity(e.target.value); setPage(1) }} aria-label="Record type">
+                <select className="select select-sm w-full border-gray-300 sm:w-52" value={entity} onChange={(e) => { setEntity(e.target.value); setPage(1) }} aria-label="Record type">
                     <option value="">All record types</option>
                     {ENTITIES.map((e) => <option key={e} value={e}>{e}</option>)}
                 </select>
@@ -112,7 +112,7 @@ const LoginHistory: React.FC = () => {
     return (
         <div className="rounded-lg bg-white shadow-sm">
             <div className="flex items-center gap-2 border-b border-gray-100 p-3">
-                <select className="select select-sm w-52 border-gray-300" value={eventType} aria-label="Event type"
+                <select className="select select-sm w-full border-gray-300 sm:w-52" value={eventType} aria-label="Event type"
                     onChange={(e) => { setEventType(e.target.value as AuthEventType | ''); setPage(1) }}>
                     <option value="">All events</option>
                     {Object.entries(EVENT_LABELS).map(([key, { label }]) => <option key={key} value={key}>{label}</option>)}

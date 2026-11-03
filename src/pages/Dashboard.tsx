@@ -82,23 +82,23 @@ const Dashboard: React.FC = () => {
                 <Card title="Needs attention" className="xl:col-span-2" padded={false}
                     actions={<Link to="/procurements?overdue=true" className="text-sm text-green-800 hover:underline">View all overdue</Link>}>
                     {attentionLoading ? <LoadingState /> : attentionError ? <ErrorState error={attentionError} /> :
-                        (attentionRes?.data.length ?? 0) === 0 ? <EmptyState message="Nothing overdue or escalated. 👍" /> : (
+                        (attentionRes?.data.length ?? 0) === 0 ? <EmptyState message="Nothing overdue or escalated." /> : (
                             <div className="overflow-x-auto">
                                 <table className="table table-sm">
                                     <thead>
-                                        <tr><th>Procurement</th><th>Owner</th><th>Current step</th><th className="text-right">Days</th><th>Flags</th></tr>
+                                        <tr><th>Procurement</th><th className="hidden lg:table-cell">Owner</th><th className="hidden md:table-cell">Current step</th><th className="text-right">Days</th><th className="hidden sm:table-cell">Flags</th></tr>
                                     </thead>
                                     <tbody>
                                         {attentionRes?.data.map((item) => (
                                             <tr key={item.procurement_id} className="cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/procurements/${item.procurement_id}`)}>
-                                                <td className="max-w-xs">
+                                                <td className="max-w-[13rem] sm:max-w-xs">
                                                     <p className="truncate font-medium text-gray-900">{item.title}</p>
                                                     <p className="text-xs text-gray-500">{item.category}{item.priority ? ` · ${item.priority}` : ''}</p>
                                                 </td>
-                                                <td className="whitespace-nowrap">{item.owner_name}</td>
-                                                <td>{item.current_stage_name ?? <StatusBadge status={item.status} />}</td>
+                                                <td className="hidden lg:table-cell whitespace-nowrap">{item.owner_name}</td>
+                                                <td className="hidden md:table-cell">{item.current_stage_name ?? <StatusBadge status={item.status} />}</td>
                                                 <td className="tabular text-right">{item.days_in_stage ?? '—'}<span className="text-gray-400"> / {item.sla_days ?? '—'}</span></td>
-                                                <td>
+                                                <td className="hidden sm:table-cell">
                                                     <div className="flex flex-wrap gap-1">
                                                         {item.is_overdue && <OverdueBadge days={item.days_in_stage} sla={item.sla_days} />}
                                                         {item.is_escalated && <EscalatedBadge to={item.escalated_to} />}

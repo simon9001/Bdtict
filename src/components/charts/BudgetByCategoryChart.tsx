@@ -1,6 +1,7 @@
 import React from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { dashboardApi } from '../../features/api/DashboardApi'
+import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { CategoryBudget, DashboardFilters } from '../../types/Types'
 import { formatMoney, formatMoneyCompact } from '../../utils/format'
 import ChartCard, { type TableColumn } from './ChartCard'
@@ -23,6 +24,7 @@ const COLUMNS: TableColumn<CategoryBudget>[] = [
 const BudgetByCategoryChart: React.FC<{ filters: DashboardFilters; className?: string }> = ({ filters, className }) => {
     const { data, isLoading, error } = dashboardApi.useGetBudgetByCategoryQuery(filters)
     const rows = data?.data ?? []
+    const small = useIsSmallScreen()
     const height = Math.max(220, rows.length * 56 + 60) // grows with categories, includes axis band
 
     return (
@@ -40,7 +42,7 @@ const BudgetByCategoryChart: React.FC<{ filters: DashboardFilters; className?: s
                 <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 16, bottom: 0, left: 8 }} barGap={2} barCategoryGap="24%">
                     <CartesianGrid horizontal={false} stroke={CHROME.grid} />
                     <XAxis type="number" tickFormatter={formatMoneyCompact} tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} />
-                    <YAxis type="category" dataKey="category" width={150} tick={tickStyle} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="category" width={small ? 96 : 150} tick={tickStyle} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
                     <Legend verticalAlign="top" align="left" iconType="square" height={32} formatter={legendText} itemSorter={null} />
                     <Bar dataKey="budget" name="Budget" fill={MONEY_COLORS.budget} barSize={BAR_SIZE} radius={RADIUS_HORIZONTAL} />

@@ -56,7 +56,7 @@ const MyWork: React.FC = () => {
                                                 {p.days_in_stage != null && ` · ${p.days_in_stage} days (target ${p.sla_days})`}
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex flex-wrap items-center gap-2">
                                             {p.is_overdue && <OverdueBadge days={p.days_in_stage} sla={p.sla_days} />}
                                             {p.is_escalated && <EscalatedBadge to={p.escalated_to} />}
                                             <ProgressBar value={p.progress_percent} />

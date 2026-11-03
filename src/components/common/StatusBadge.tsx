@@ -1,5 +1,5 @@
 import React from 'react'
-import { Ban, CircleCheck, CircleDashed, CirclePause, CircleX, Clock, Hourglass, ShieldCheck, Undo2, type LucideIcon } from 'lucide-react'
+import { Ban, CircleCheck, CircleDashed, CirclePause, CircleX, Clock, Eye, Hourglass, ShieldCheck, Undo2, type LucideIcon } from 'lucide-react'
 
 /**
  * Status pill used for procurements, steps, contracts, invoices and tasks.
@@ -22,6 +22,7 @@ const STYLES: Record<string, StatusStyle> = {
     // procurements / tasks
     'Not Started': { className: GRAY, icon: CircleDashed },
     'In Progress': { className: BLUE, icon: Clock },
+    'In Review': { className: PURPLE, icon: Eye },
     'On Hold': { className: AMBER, icon: CirclePause },
     Completed: { className: GREEN, icon: CircleCheck },
     Cancelled: { className: GRAY, icon: Ban },

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { dashboardApi } from '../../features/api/DashboardApi'
+import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { DashboardFilters, QuarterSpend } from '../../types/Types'
 import { formatMoney, formatMoneyCompact } from '../../utils/format'
 import ChartCard, { type TableColumn } from './ChartCard'
@@ -27,6 +28,7 @@ const QUARTER_MONTHS: Record<string, string> = { Q1: 'Q1 Jul–Sep', Q2: 'Q2 Oct
 
 const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: string }> = ({ filters, className }) => {
     const [mode, setMode] = useState<'quarter' | 'cumulative'>('quarter')
+    const small = useIsSmallScreen()
     const { data, isLoading, error } = dashboardApi.useGetQuarterlySpendQuery(filters)
     const rows = (data?.data ?? []).map((row) => ({ ...row, label: QUARTER_MONTHS[row.quarter] ?? row.quarter }))
     const isEmpty = rows.every((row) => row.planned === 0 && row.actual === 0)
@@ -34,7 +36,7 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
     const axes = (
         <>
             <CartesianGrid vertical={false} stroke={CHROME.grid} />
-            <XAxis dataKey="label" tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} />
+            <XAxis dataKey={small ? 'quarter' : 'label'} interval={0} tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} />
             <YAxis tickFormatter={formatMoneyCompact} tick={tickStyle} axisLine={false} tickLine={false} width={80} />
             <Legend verticalAlign="top" align="left" iconType="square" height={32} formatter={legendText} itemSorter={null} />
         </>

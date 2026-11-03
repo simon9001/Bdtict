@@ -3,12 +3,14 @@ import { persistReducer, persistStore, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, 
 import { baseApi } from '../features/api/baseApi'
 import authSlice from '../features/slice/AuthSlice'
 import filterSlice from '../features/slice/FilterSlice'
+import uiSlice from '../features/slice/UiSlice'
 
 /**
  * Redux store.
  *   api          - RTK Query cache for every endpoint (features/api/*)
  *   authSlice    - logged-in user + token   (persisted)
  *   filterSlice  - selected financial year  (persisted)
+ *   uiSlice      - sidebar full / icons only (persisted)
  */
 
 // localStorage adapter for redux-persist. Written out instead of importing
@@ -27,10 +29,13 @@ const persistedAuthReducer = persistReducer(
 
 const persistedFilterReducer = persistReducer({ key: 'filters', storage, version: 1 }, filterSlice)
 
+const persistedUiReducer = persistReducer({ key: 'ui', storage, version: 1 }, uiSlice)
+
 const rootReducer = combineReducers({
     [baseApi.reducerPath]: baseApi.reducer,
     authSlice: persistedAuthReducer,
     filterSlice: persistedFilterReducer,
+    uiSlice: persistedUiReducer,
 })
 
 export const store = configureStore({

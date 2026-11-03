@@ -49,6 +49,7 @@ src/
 
   The API still enforces every rule.
 - **One shared cache.** Each feature file adds its endpoints to one `baseApi`. Cache tags therefore work across features: recording a payment also refreshes its invoice, its contract and the dashboard.
+- **Responsive layout.** On large screens the sidebar is full width or icons only, using the button in the top bar, and the choice is remembered. Below 1024px it is a slide-in drawer. On narrow screens tables hide secondary columns and repeat the key facts under the title.
 - **Financial year.** It's chosen once in the top bar and applies to every page.
 - **Filters in the URL.** List filters live in the URL, so dashboard tiles link to filtered lists (for example `/procurements?overdue=true`), and filtered views can be bookmarked.
 - **Code splitting.** The chart-heavy pages (Dashboard, Reports) load on demand, so the charting library isn't part of the first download.

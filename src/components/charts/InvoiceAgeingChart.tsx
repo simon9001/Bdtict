@@ -1,6 +1,7 @@
 import React from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { dashboardApi } from '../../features/api/DashboardApi'
+import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { AgeingBucket, DashboardFilters } from '../../types/Types'
 import { formatMoney, formatMoneyCompact } from '../../utils/format'
 import ChartCard, { type TableColumn } from './ChartCard'
@@ -21,6 +22,7 @@ const COLUMNS: TableColumn<AgeingBucket>[] = [
 
 const InvoiceAgeingChart: React.FC<{ filters: DashboardFilters; className?: string }> = ({ filters, className }) => {
     const { data, isLoading, error } = dashboardApi.useGetInvoiceAgeingQuery(filters)
+    const small = useIsSmallScreen()
     const rows = data?.data ?? []
     const isEmpty = rows.every((row) => row.invoices === 0)
 
@@ -31,7 +33,7 @@ const InvoiceAgeingChart: React.FC<{ filters: DashboardFilters; className?: stri
             isLoading={isLoading}
             error={error}
             isEmpty={isEmpty}
-            emptyMessage="No unpaid invoices. 🎉"
+            emptyMessage="No unpaid invoices."
             rows={rows}
             columns={COLUMNS}
             className={className}
@@ -39,7 +41,7 @@ const InvoiceAgeingChart: React.FC<{ filters: DashboardFilters; className?: stri
             <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }} barCategoryGap="30%">
                     <CartesianGrid vertical={false} stroke={CHROME.grid} />
-                    <XAxis dataKey="bucket" tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} />
+                    <XAxis dataKey="bucket" interval={0} tickFormatter={(bucket: string) => (small ? bucket.replace(' days', '') : bucket)} tick={tickStyle} axisLine={{ stroke: CHROME.axis }} tickLine={false} />
                     <YAxis tickFormatter={formatMoneyCompact} tick={tickStyle} axisLine={false} tickLine={false} width={80} />
                     <Tooltip
                         cursor={{ fill: 'rgba(0,0,0,0.04)' }}

@@ -178,10 +178,10 @@ export interface BudgetLineQuery extends PageQuery {
 
 // =============================== Procurements ===============================
 
-export const PROCUREMENT_STATUSES = ['Not Started', 'In Progress', 'On Hold', 'Completed', 'Cancelled', 'Rejected'] as const;
+export const PROCUREMENT_STATUSES = ['Not Started', 'In Progress', 'In Review', 'On Hold', 'Completed', 'Cancelled', 'Rejected'] as const;
 export type ProcurementStatus = (typeof PROCUREMENT_STATUSES)[number];
 
-export const STAGE_EVENT_STATUSES = ['Pending', 'In Progress', 'Approved', 'Completed', 'Rejected', 'Returned'] as const;
+export const STAGE_EVENT_STATUSES = ['Pending', 'In Progress', 'In Review', 'Approved', 'Completed', 'Rejected', 'Returned'] as const;
 export type StageEventStatus = (typeof STAGE_EVENT_STATUSES)[number];
 
 export interface Procurement {
