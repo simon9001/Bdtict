@@ -1,8 +1,10 @@
 import React from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useNavigate } from 'react-router'
 import { dashboardApi } from '../../features/api/DashboardApi'
 import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { DashboardFilters, StageDuration } from '../../types/Types'
+import { drillContext, drillTo } from '../../utils/drill'
 import ChartCard, { type TableColumn } from './ChartCard'
 import ChartTooltip from './ChartTooltip'
 import { BAR_SIZE, CHROME, RADIUS_HORIZONTAL, SERIES, STATUS, tickStyle } from './chartTheme'
@@ -33,18 +35,23 @@ const StageDurationChart: React.FC<{ filters: DashboardFilters; className?: stri
     const { data, isLoading, error } = dashboardApi.useGetStageDurationsQuery(filters)
     const rows = (data?.data ?? []).filter((stage) => stage.samples > 0)
     const small = useIsSmallScreen()
+    const navigate = useNavigate()
+
+    // The procurements measured: those that have completed this step
+    const stepLink = (row: StageDuration) => drillTo('/procurements', drillContext(filters, data?.financial_year), { passed_stage_id: row.stage_id })
     const height = Math.max(200, rows.length * (small ? 52 : 36) + 40)
 
     return (
         <ChartCard
             title="Average days per step"
-            subtitle="Measured from completed steps · black tick = target days"
+            subtitle="Measured from completed steps · black tick = target days · click a bar to see them"
             isLoading={isLoading}
             error={error}
             isEmpty={rows.length === 0}
             emptyMessage="Not enough completed steps yet to measure durations."
             rows={rows}
             columns={COLUMNS}
+            rowLink={stepLink}
             className={className}
             actions={
                 <div className="hidden items-center gap-3 text-xs text-gray-600 md:flex">
@@ -67,12 +74,12 @@ const StageDurationChart: React.FC<{ filters: DashboardFilters; className?: stri
                                 extraLine={(row) => `${row.samples} item(s) measured · longest ${row.max_days} days`} />
                         )}
                     />
-                    <Bar yAxisId="bars" dataKey="avg_days" name="Average" barSize={BAR_SIZE} radius={RADIUS_HORIZONTAL}>
+                    <Bar isAnimationActive={false} yAxisId="bars" dataKey="avg_days" name="Average" barSize={BAR_SIZE} radius={RADIUS_HORIZONTAL} className="cursor-pointer" onClick={(entry) => navigate(stepLink(entry.payload as StageDuration))}>
                         {rows.map((row) => (
                             <Cell key={row.stage_id} fill={row.over_sla ? STATUS.serious : SERIES.blue} />
                         ))}
                     </Bar>
-                    <Bar yAxisId="targets" dataKey="sla_days" name="Target" barSize={BAR_SIZE} fill="transparent" shape={TargetTick} />
+                    <Bar isAnimationActive={false} yAxisId="targets" dataKey="sla_days" name="Target" barSize={BAR_SIZE} fill="transparent" shape={TargetTick} />
                 </BarChart>
             </ResponsiveContainer>
         </ChartCard>

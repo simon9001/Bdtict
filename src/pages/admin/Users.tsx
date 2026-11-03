@@ -13,13 +13,14 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/common/St
 import UserFormModal from '../../components/admin/UserFormModal'
 
 const ROLE_BADGES = {
+    sa: 'bg-purple-100 text-purple-800',
     admin: 'bg-green-100 text-green-800',
     officer: 'bg-blue-100 text-blue-800',
     viewer: 'bg-gray-100 text-gray-700',
 }
-const ROLE_LABELS = { admin: 'Head of ICT', officer: 'ICT Officer', viewer: 'Viewer' }
+const ROLE_LABELS = { sa: 'System Administrator', admin: 'Head of ICT', officer: 'ICT Officer', viewer: 'Viewer' }
 
-// Staff accounts - Head of ICT only
+// Staff accounts - system administrator only
 const Users: React.FC = () => {
     const currentUser = useCurrentUser()
     const { data, isLoading, error, refetch } = userApi.useGetAllUsersQuery()

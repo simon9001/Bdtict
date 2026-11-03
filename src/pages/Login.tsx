@@ -112,7 +112,7 @@ const Login: React.FC = () => {
                             </button>
 
                             <p className="text-center text-sm text-gray-500">
-                                Forgot your password? Ask the Head of ICT to reset it.
+                                Forgot your password? Ask the system administrator to reset it.
                             </p>
                         </form>
                     </div>

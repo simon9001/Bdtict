@@ -8,6 +8,7 @@ import { useCurrentUser, useSelectedFy } from '../../store/hooks'
 import { CONTRACT_STATUSES, type ContractStatus } from '../../types/Types'
 import { canCreate } from '../../utils/permissions'
 import { formatDate, formatMoney } from '../../utils/format'
+import ActiveFilters from '../../components/common/ActiveFilters'
 import PageHeader from '../../components/common/PageHeader'
 import { PrimaryButton } from '../../components/common/Buttons'
 import StatusBadge from '../../components/common/StatusBadge'
@@ -24,14 +25,15 @@ const Contracts: React.FC = () => {
     const navigate = useNavigate()
     const user = useCurrentUser()
     const fyId = useSelectedFy()
-    const { staff } = useReferenceData()
+    const { categories, staff } = useReferenceData()
     const filters = useUrlFilters()
     const [showForm, setShowForm] = useState(false)
     const [searchText, setSearchText] = useState(filters.getString('search') ?? '')
 
     const expiring = filters.getNumber('expiring_within_days')
     const { data, isLoading, isFetching, error, refetch } = contractApi.useGetContractsQuery({
-        fy_id: expiring ? undefined : fyId,
+        fy_id: expiring ? undefined : filters.getNumber('fy_id') ?? fyId,
+        category_id: filters.getNumber('category_id'),
         status: filters.getString('status') as ContractStatus | undefined,
         owner_id: filters.getNumber('owner_id'),
         expiring_within_days: expiring,
@@ -74,6 +76,8 @@ const Contracts: React.FC = () => {
                 </select>
                 {filters.hasFilters && <button className="btn btn-ghost btn-sm" onClick={() => { setSearchText(''); filters.clearFilters() }}>Clear</button>}
             </div>
+
+            <ActiveFilters items={[filters.getNumber('category_id') && `Category: ${categories.find((c) => c.lookup_id === filters.getNumber('category_id'))?.value ?? ''}`]} />
 
             <div className={`rounded-lg bg-white shadow-sm transition-opacity ${isFetching && !isLoading ? 'opacity-60' : ''}`}>
                 {isLoading ? <LoadingState /> : error ? <ErrorState error={error} onRetry={refetch} /> : rows.length === 0 ? (

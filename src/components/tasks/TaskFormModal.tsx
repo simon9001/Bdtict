@@ -22,7 +22,7 @@ interface TaskFormModalProps {
 // Create or edit a follow-up task
 const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, procurementId }) => {
     const user = useCurrentUser()
-    const { priorities, staff } = useReferenceData()
+    const { priorities, sections, staff } = useReferenceData()
     const isEdit = !!task
 
     const [createTask, { isLoading: creating }] = taskApi.useCreateTaskMutation()
@@ -37,6 +37,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
             owner_id: task.owner_id,
             procurement_id: task.procurement_id,
             priority_id: task.priority_id,
+            section_id: task.section_id,
             due_date: toDateInput(task.due_date) || null,
             status: task.status,
         } : { owner_id: user?.user_id, procurement_id: procurementId ?? null, status: 'Open' })
@@ -74,6 +75,12 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
                         <select className={inputClass} {...register('priority_id', { setValueAs: optionalId })}>
                             <option value="">—</option>
                             {priorities.map((p) => <option key={p.lookup_id} value={p.lookup_id}>{p.value}</option>)}
+                        </select>
+                    </FormField>
+                    <FormField label="Tracker section">
+                        <select className={inputClass} {...register('section_id', { setValueAs: optionalId })}>
+                            <option value="">—</option>
+                            {sections.filter((s) => s.value.startsWith('T-')).map((s) => <option key={s.lookup_id} value={s.lookup_id}>{s.value}</option>)}
                         </select>
                     </FormField>
                     <FormField label="Status">

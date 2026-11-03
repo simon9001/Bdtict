@@ -1,7 +1,8 @@
 import { baseApi, toQueryString } from './baseApi'
 import type {
-    AgeingBucket, ApiResponse, AttentionItem, CategoryBudget, DashboardFilters, DashboardResponse, DashboardSummary,
-    ExpiringContract, OfficerWorkload, PipelineStage, QuarterSpend, StageDuration, YearComparison,
+    ActivitySummary, AgeingBucket, ApiResponse, AttentionItem, CategoryBudget, DashboardBreakdowns, DashboardFilters, DashboardResponse,
+    DashboardSummary, ExpiringContract, MonthlyTrend, OfficerWorkload, PipelineStage, QuarterSpend, RecentActivity, StageDuration,
+    TopBudgetLine, YearComparison,
 } from '../../types/Types'
 
 // One endpoint per dashboard chart. All accept fy_id / category_id / owner_id.
@@ -50,6 +51,31 @@ export const dashboardApi = baseApi.injectEndpoints({
 
         getAttentionList: builder.query<DashboardResponse<AttentionItem[]>, DashboardFilters>({
             query: (filters) => `dashboard/attention${toQueryString(filters)}`,
+            providesTags: ['Dashboard'],
+        }),
+
+        getBreakdowns: builder.query<DashboardResponse<DashboardBreakdowns>, DashboardFilters>({
+            query: (filters) => `dashboard/breakdowns${toQueryString(filters)}`,
+            providesTags: ['Dashboard'],
+        }),
+
+        getActivitySummary: builder.query<DashboardResponse<ActivitySummary>, DashboardFilters>({
+            query: (filters) => `dashboard/activity-summary${toQueryString(filters)}`,
+            providesTags: ['Dashboard'],
+        }),
+
+        getMonthlyTrend: builder.query<DashboardResponse<MonthlyTrend[]>, DashboardFilters>({
+            query: (filters) => `dashboard/monthly-trend${toQueryString(filters)}`,
+            providesTags: ['Dashboard'],
+        }),
+
+        getTopBudgetLines: builder.query<DashboardResponse<TopBudgetLine[]>, DashboardFilters>({
+            query: (filters) => `dashboard/top-budget-lines${toQueryString(filters)}`,
+            providesTags: ['Dashboard'],
+        }),
+
+        getRecentActivity: builder.query<DashboardResponse<RecentActivity>, DashboardFilters>({
+            query: (filters) => `dashboard/recent-activity${toQueryString(filters)}`,
             providesTags: ['Dashboard'],
         }),
 

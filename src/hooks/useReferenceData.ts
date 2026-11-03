@@ -21,6 +21,7 @@ export const useReferenceData = () => {
             priorities: byType('priority'),
             acquisitionMethods: byType('acquisition_method'),
             scmOfficers: byType('scm_officer'),
+            sections: byType('section'),
         }
     }, [lookupsRes])
 
@@ -31,8 +32,8 @@ export const useReferenceData = () => {
         financialYears,
         currentYear: financialYears.find((fy) => fy.is_current),
         stages: stagesRes?.data ?? [],
-        // Officers and the Head can own items; viewers cannot
-        staff: (usersRes?.data ?? []).filter((u) => u.role !== 'viewer'),
+        // Officers and the Head can own items; viewers and the system administrator cannot
+        staff: (usersRes?.data ?? []).filter((u) => u.role === 'admin' || u.role === 'officer'),
         isLoading: lookupsLoading || yearsLoading || stagesLoading || usersLoading,
     }
 }

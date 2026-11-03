@@ -45,6 +45,7 @@ const LOOKUP_GROUPS: { type: LookupType; title: string }[] = [
     { type: 'priority', title: 'Priorities' },
     { type: 'acquisition_method', title: 'Acquisition methods' },
     { type: 'scm_officer', title: 'SCM officers' },
+    { type: 'section', title: 'Tracker sections' },
 ]
 
 const LookupSettings: React.FC = () => {

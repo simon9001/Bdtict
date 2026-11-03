@@ -11,25 +11,17 @@ import PublicRoute from './components/auth/PublicRoute'
 
 // Pages
 import Login from './pages/Login'
-import MyWork from './pages/MyWork'
-import Procurements from './pages/procurements/Procurements'
-import ProcurementDetail from './pages/procurements/ProcurementDetail'
-import BudgetLines from './pages/budget/BudgetLines'
-import BudgetLineDetail from './pages/budget/BudgetLineDetail'
-import Contracts from './pages/contracts/Contracts'
-import ContractDetail from './pages/contracts/ContractDetail'
-import Invoices from './pages/invoices/Invoices'
-import InvoiceDetail from './pages/invoices/InvoiceDetail'
-import Payments from './pages/Payments'
-import Tasks from './pages/Tasks'
-import Profile from './pages/Profile'
-import Users from './pages/admin/Users'
-import Settings from './pages/admin/Settings'
-import AuditLogs from './pages/admin/AuditLogs'
-import NotFound from './pages/NotFound'
+import SaRoute from './components/auth/SaRoute'
 
-// Chart-heavy pages are loaded on demand so the charting library is not in the first download
-const lazyPage = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({ Component: (await load()).default })
+// Pages are loaded when first opened, so the first download stays small
+type PageModule = () => Promise<{ default: React.ComponentType }>
+const lazyPage = (load: PageModule) => async () => ({ Component: (await load()).default })
+
+// The same for a page behind a role check
+const guardedPage = (Guard: React.ComponentType<{ children: React.ReactNode }>, load: PageModule) => async () => {
+    const Page = (await load()).default
+    return { Component: () => <Guard><Page /></Guard> }
+}
 
 /**
  * Routes.
@@ -46,26 +38,32 @@ const router = createBrowserRouter([
         children: [
             { path: '/', element: <Navigate to="/dashboard" replace /> },
             { path: '/dashboard', lazy: lazyPage(() => import('./pages/Dashboard')) },
-            { path: '/my-work', element: <MyWork /> },
-            { path: '/procurements', element: <Procurements /> },
-            { path: '/procurements/:id', element: <ProcurementDetail /> },
-            { path: '/budget-lines', element: <BudgetLines /> },
-            { path: '/budget-lines/:id', element: <BudgetLineDetail /> },
-            { path: '/contracts', element: <Contracts /> },
-            { path: '/contracts/:id', element: <ContractDetail /> },
-            { path: '/invoices', element: <Invoices /> },
-            { path: '/invoices/:id', element: <InvoiceDetail /> },
-            { path: '/payments', element: <Payments /> },
-            { path: '/tasks', element: <Tasks /> },
+            { path: '/my-work', lazy: lazyPage(() => import('./pages/MyWork')) },
+            { path: '/tracker', lazy: lazyPage(() => import('./pages/Tracker')) },
+            { path: '/tracker/:sheet', lazy: lazyPage(() => import('./pages/Tracker')) },
+            { path: '/lists', lazy: lazyPage(() => import('./pages/Lists')) },
+            { path: '/memos', lazy: lazyPage(() => import('./pages/Memos')) },
+            { path: '/procurements', lazy: lazyPage(() => import('./pages/procurements/Procurements')) },
+            { path: '/procurements/:id', lazy: lazyPage(() => import('./pages/procurements/ProcurementDetail')) },
+            { path: '/budget-lines', lazy: lazyPage(() => import('./pages/budget/BudgetLines')) },
+            { path: '/budget-lines/:id', lazy: lazyPage(() => import('./pages/budget/BudgetLineDetail')) },
+            { path: '/contracts', lazy: lazyPage(() => import('./pages/contracts/Contracts')) },
+            { path: '/contracts/:id', lazy: lazyPage(() => import('./pages/contracts/ContractDetail')) },
+            { path: '/invoices', lazy: lazyPage(() => import('./pages/invoices/Invoices')) },
+            { path: '/invoices/:id', lazy: lazyPage(() => import('./pages/invoices/InvoiceDetail')) },
+            { path: '/payments', lazy: lazyPage(() => import('./pages/Payments')) },
+            { path: '/tasks', lazy: lazyPage(() => import('./pages/Tasks')) },
             { path: '/reports', lazy: lazyPage(() => import('./pages/Reports')) },
-            { path: '/profile', element: <Profile /> },
+            { path: '/profile', lazy: lazyPage(() => import('./pages/Profile')) },
 
-            // Head of ICT only
-            { path: '/admin/users', element: <AdminRoute><Users /></AdminRoute> },
-            { path: '/admin/settings', element: <AdminRoute><Settings /></AdminRoute> },
-            { path: '/admin/audit', element: <AdminRoute><AuditLogs /></AdminRoute> },
+            // System administrator only
+            { path: '/admin/users', lazy: guardedPage(SaRoute, () => import('./pages/admin/Users')) },
 
-            { path: '*', element: <NotFound /> },
+            // Head of ICT and system administrator
+            { path: '/admin/settings', lazy: guardedPage(AdminRoute, () => import('./pages/admin/Settings')) },
+            { path: '/admin/audit', lazy: guardedPage(AdminRoute, () => import('./pages/admin/AuditLogs')) },
+
+            { path: '*', lazy: lazyPage(() => import('./pages/NotFound')) },
         ],
     },
 ])

@@ -8,7 +8,7 @@ import PageHeader from '../components/common/PageHeader'
 import Card from '../components/common/Card'
 import { FormField, inputClass } from '../components/common/FormField'
 
-const ROLE_LABELS = { admin: 'Head of ICT (administrator)', officer: 'ICT Officer', viewer: 'Viewer (read only)' }
+const ROLE_LABELS = { sa: 'System Administrator', admin: 'Head of ICT', officer: 'ICT Officer', viewer: 'Viewer (read only)' }
 
 type PasswordForm = { current_password: string; new_password: string; confirm_password: string }
 
@@ -38,7 +38,7 @@ const Profile: React.FC = () => {
                         <div className="flex justify-between"><dt className="text-gray-500">Email</dt><dd className="font-medium">{user?.email}</dd></div>
                         <div className="flex justify-between"><dt className="text-gray-500">Role</dt><dd className="font-medium">{user ? ROLE_LABELS[user.role] : ''}</dd></div>
                     </dl>
-                    <p className="mt-4 text-xs text-gray-500">To change your name, email or role, ask the Head of ICT.</p>
+                    <p className="mt-4 text-xs text-gray-500">To change your name, email or role, ask the system administrator.</p>
                 </Card>
 
                 <Card title="Change password">

@@ -1,9 +1,11 @@
 import React from 'react'
 import { Link } from 'react-router'
 import { invoiceApi } from '../features/api/InvoiceApi'
+import { useReferenceData } from '../hooks/useReferenceData'
 import { useUrlFilters } from '../hooks/useUrlFilters'
 import { useSelectedFy } from '../store/hooks'
 import { formatDate, formatMoney } from '../utils/format'
+import ActiveFilters from '../components/common/ActiveFilters'
 import PageHeader from '../components/common/PageHeader'
 import Pagination from '../components/common/Pagination'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
@@ -14,10 +16,13 @@ import { EmptyState, ErrorState, LoadingState } from '../components/common/State
  */
 const Payments: React.FC = () => {
     const fyId = useSelectedFy()
+    const { categories, staff } = useReferenceData()
     const filters = useUrlFilters()
 
     const { data, isLoading, isFetching, error, refetch } = invoiceApi.useGetPaymentsQuery({
-        fy_id: fyId,
+        fy_id: filters.getNumber('fy_id') ?? fyId,
+        category_id: filters.getNumber('category_id'),
+        owner_id: filters.getNumber('owner_id'),
         paid_from: filters.getString('paid_from'),
         paid_to: filters.getString('paid_to'),
         page: filters.page,
@@ -43,6 +48,11 @@ const Payments: React.FC = () => {
                     Total for selection: <strong className="tabular text-lg text-gray-900">{formatMoney(data?.summary.total_amount ?? 0)}</strong>
                 </div>
             </div>
+
+            <ActiveFilters items={[
+                filters.getNumber('category_id') && `Category: ${categories.find((c) => c.lookup_id === filters.getNumber('category_id'))?.value ?? ''}`,
+                filters.getNumber('owner_id') && `Officer: ${staff.find((u) => u.user_id === filters.getNumber('owner_id'))?.full_name ?? ''}`,
+            ]} />
 
             <div className={`rounded-lg bg-white shadow-sm transition-opacity ${isFetching && !isLoading ? 'opacity-60' : ''}`}>
                 {isLoading ? <LoadingState /> : error ? <ErrorState error={error} onRetry={refetch} /> : rows.length === 0 ? (

@@ -51,6 +51,7 @@ const ProcurementFormModal: React.FC<ProcurementFormModalProps> = ({ open, onClo
             owner_id: procurement.owner_id,
             category_id: procurement.category_id,
             priority_id: procurement.priority_id,
+            section_id: procurement.section_id,
             acquisition_method_id: procurement.acquisition_method_id,
             scm_officer_id: procurement.scm_officer_id,
             status: procurement.status,
@@ -147,6 +148,13 @@ const ProcurementFormModal: React.FC<ProcurementFormModalProps> = ({ open, onClo
                         <select className={inputClass} {...register('acquisition_method_id', { setValueAs: optionalId })}>
                             <option value="">—</option>
                             {ref.acquisitionMethods.map((m) => <option key={m.lookup_id} value={m.lookup_id}>{m.value}</option>)}
+                        </select>
+                    </FormField>
+
+                    <FormField label="Tracker section">
+                        <select className={inputClass} {...register('section_id', { setValueAs: optionalId })}>
+                            <option value="">—</option>
+                            {ref.sections.map((s) => <option key={s.lookup_id} value={s.lookup_id}>{s.value}</option>)}
                         </select>
                     </FormField>
 

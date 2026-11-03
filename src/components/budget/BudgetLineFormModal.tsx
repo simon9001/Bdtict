@@ -40,6 +40,7 @@ const BudgetLineFormModal: React.FC<BudgetLineFormModalProps> = ({ open, onClose
             description: budgetLine.description,
             category_id: budgetLine.category_id,
             priority_id: budgetLine.priority_id,
+            section_id: budgetLine.section_id,
             owner_id: budgetLine.owner_id,
             quantity: budgetLine.quantity,
             unit_price: budgetLine.unit_price,
@@ -99,6 +100,13 @@ const BudgetLineFormModal: React.FC<BudgetLineFormModalProps> = ({ open, onClose
                         <div className="md:col-span-2 rounded-lg bg-green-50 px-4 py-2 text-sm text-green-900">
                             Total: <strong className="tabular">{formatMoney(total)}</strong>
                         </div>
+
+                        <FormField label="Tracker section">
+                            <select className={inputClass} {...register('section_id', { setValueAs: optionalId })}>
+                                <option value="">—</option>
+                                {ref.sections.filter((s) => !s.value.startsWith('T-')).map((s) => <option key={s.lookup_id} value={s.lookup_id}>{s.value}</option>)}
+                            </select>
+                        </FormField>
 
                         <FormField label="Priority">
                             <select className={inputClass} {...register('priority_id', { setValueAs: optionalId })}>

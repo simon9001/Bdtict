@@ -7,7 +7,7 @@ import { setFinancialYear } from '../features/slice/FilterSlice'
 import { baseApi } from '../features/api/baseApi'
 import { settingsApi } from '../features/api/SettingsApi'
 
-const ROLE_LABELS = { admin: 'Head of ICT', officer: 'ICT Officer', viewer: 'Viewer' }
+const ROLE_LABELS = { sa: 'System Administrator', admin: 'Head of ICT', officer: 'ICT Officer', viewer: 'Viewer' }
 
 interface NavbarProps {
     onMenuClick: () => void  // small screens: drawer · large screens: full / icons only

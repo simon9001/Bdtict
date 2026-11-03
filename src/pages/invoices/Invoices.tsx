@@ -8,6 +8,7 @@ import { useCurrentUser } from '../../store/hooks'
 import { INVOICE_STATUSES, type InvoiceStatus } from '../../types/Types'
 import { canCreate } from '../../utils/permissions'
 import { formatDate, formatMoney } from '../../utils/format'
+import ActiveFilters from '../../components/common/ActiveFilters'
 import PageHeader from '../../components/common/PageHeader'
 import { PrimaryButton } from '../../components/common/Buttons'
 import StatusBadge from '../../components/common/StatusBadge'
@@ -22,7 +23,7 @@ import InvoiceFormModal from '../../components/invoices/InvoiceFormModal'
 const Invoices: React.FC = () => {
     const navigate = useNavigate()
     const user = useCurrentUser()
-    const { staff } = useReferenceData()
+    const { categories, staff } = useReferenceData()
     const filters = useUrlFilters()
     const [showForm, setShowForm] = useState(false)
     const [searchText, setSearchText] = useState(filters.getString('search') ?? '')
@@ -30,6 +31,12 @@ const Invoices: React.FC = () => {
     const { data, isLoading, isFetching, error, refetch } = invoiceApi.useGetInvoicesQuery({
         status: filters.getString('status') as InvoiceStatus | undefined,
         owner_id: filters.getNumber('owner_id'),
+        fy_id: filters.getNumber('fy_id'),
+        category_id: filters.getNumber('category_id'),
+        age_min: filters.getNumber('age_min'),
+        age_max: filters.getNumber('age_max'),
+        received_from: filters.getString('received_from'),
+        received_to: filters.getString('received_to'),
         unpaid_only: filters.getBool('unpaid_only'),
         search: filters.getString('search'),
         page: filters.page,
@@ -68,6 +75,12 @@ const Invoices: React.FC = () => {
                 </label>
                 {filters.hasFilters && <button className="btn btn-ghost btn-sm" onClick={() => { setSearchText(''); filters.clearFilters() }}>Clear</button>}
             </div>
+
+            <ActiveFilters items={[
+                filters.getNumber('category_id') && `Category: ${categories.find((c) => c.lookup_id === filters.getNumber('category_id'))?.value ?? ''}`,
+                filters.getString('age_min') !== undefined && `Waiting ${filters.getString('age_min')}${filters.getString('age_max') ? `-${filters.getString('age_max')}` : '+'} days`,
+                filters.getString('received_from') && `Received ${filters.getString('received_from')} to ${filters.getString('received_to') ?? ''}`,
+            ]} />
 
             <div className={`rounded-lg bg-white shadow-sm transition-opacity ${isFetching && !isLoading ? 'opacity-60' : ''}`}>
                 {isLoading ? <LoadingState /> : error ? <ErrorState error={error} onRetry={refetch} /> : rows.length === 0 ? (

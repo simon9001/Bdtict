@@ -38,6 +38,31 @@ export const STATUS = {
     critical: '#d03b3b',
 }
 
+/**
+ * One colour per status, the same as its badge, on every chart. Neighbouring
+ * slices were checked with the dataviz palette validator in this order:
+ * Not Started, In Progress, On Hold, In Review, Completed, Rejected. Gray is the
+ * deliberate "nothing happening" colour. Charts list every figure next to the
+ * colour and have a table view, so nothing depends on colour alone.
+ */
+const STATUS_COLOR_GROUPS: [string, string[]][] = [
+    ['#898781', ['Not Started', 'Open', 'Received', 'Not set']],
+    ['#2a78d6', ['In Progress', 'Active']],
+    ['#eda100', ['On Hold', 'Expired']],
+    ['#6250d6', ['In Review', 'Verified', 'Returned']],
+    ['#1baf7a', ['Approved']],
+    ['#008300', ['Completed', 'Done', 'Paid']],
+    ['#e34948', ['Rejected', 'Terminated']],
+    ['#c3c2b7', ['Cancelled']],
+]
+
+export const STATUS_COLORS: Record<string, string> = Object.fromEntries(
+    STATUS_COLOR_GROUPS.flatMap(([color, names]) => names.map((name) => [name, color])),
+)
+
+/** All eight categorical slots, in validated order, for lists such as categories */
+export const CATEGORICAL = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948']
+
 // Ordered (light -> dark) blue steps for ordinal categories such as age buckets
 export const ORDINAL_BLUE = ['#86b6ef', '#3987e5', '#1c5cab', '#0d366b']
 

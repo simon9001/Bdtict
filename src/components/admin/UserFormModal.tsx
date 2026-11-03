@@ -14,7 +14,7 @@ interface UserFormModalProps {
     user?: User // edit mode
 }
 
-// Head of ICT creates staff accounts here (there is no self-registration)
+// The system administrator creates staff accounts here (there is no self-registration)
 const UserFormModal: React.FC<UserFormModalProps> = ({ open, onClose, user }) => {
     const isEdit = !!user
     const [createUser, { isLoading: creating }] = userApi.useCreateUserMutation()
@@ -61,7 +61,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ open, onClose, user }) =>
                     <FormField label="Role" required>
                         <select className={inputClass} {...register('role')}>
                             <option value="officer">ICT Officer</option>
-                            <option value="admin">Head of ICT (admin)</option>
+                            <option value="admin">Head of ICT</option>
+                            <option value="sa">System Administrator</option>
                             <option value="viewer">Viewer (read only)</option>
                         </select>
                     </FormField>

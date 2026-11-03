@@ -1,8 +1,10 @@
 import React from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useNavigate } from 'react-router'
 import { dashboardApi } from '../../features/api/DashboardApi'
 import type { DashboardFilters, YearComparison } from '../../types/Types'
 import { formatMoney, formatMoneyCompact } from '../../utils/format'
+import { drillTo } from '../../utils/drill'
 import ChartCard, { type TableColumn } from './ChartCard'
 import ChartTooltip from './ChartTooltip'
 import { BAR_SIZE, CHROME, MONEY_COLORS, RADIUS_VERTICAL, tickStyle, legendText } from './chartTheme'
@@ -23,19 +25,23 @@ const COLUMNS: TableColumn<YearComparison>[] = [
 ]
 
 const YearComparisonChart: React.FC<{ filters: Omit<DashboardFilters, 'fy_id'>; className?: string }> = ({ filters, className }) => {
+    const navigate = useNavigate()
     const { data, isLoading, error } = dashboardApi.useGetYearComparisonQuery(filters)
+    const linkTo = (listPath: string) => (entry: { payload?: unknown }) =>
+        navigate(drillTo(listPath, { ...filters, fy_id: (entry.payload as YearComparison).fy_id }))
     // Hide future years that have nothing in them yet
     const rows = (data?.data ?? []).filter((fy) => fy.budget > 0 || fy.contracted > 0 || fy.paid > 0 || fy.is_current)
 
     return (
         <ChartCard
             title="Year-on-year"
-            subtitle="Budget, contracts and payments for each financial year"
+            subtitle="Budget, contracts and payments for each financial year · click a bar to see them"
             isLoading={isLoading}
             error={error}
             isEmpty={rows.length === 0}
             rows={rows}
             columns={COLUMNS}
+            rowLink={(row) => drillTo('/budget-lines', { ...filters, fy_id: row.fy_id })}
             className={className}
         >
             <ResponsiveContainer width="100%" height={300}>
@@ -45,9 +51,9 @@ const YearComparisonChart: React.FC<{ filters: Omit<DashboardFilters, 'fy_id'>; 
                     <YAxis tickFormatter={formatMoneyCompact} tick={tickStyle} axisLine={false} tickLine={false} width={80} />
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
                     <Legend verticalAlign="top" align="left" iconType="square" height={32} formatter={legendText} itemSorter={null} />
-                    <Bar dataKey="budget" name="Budget" fill={MONEY_COLORS.budget} barSize={BAR_SIZE * 1.5} radius={RADIUS_VERTICAL} />
-                    <Bar dataKey="contracted" name="Contracted" fill={MONEY_COLORS.contracted} barSize={BAR_SIZE * 1.5} radius={RADIUS_VERTICAL} />
-                    <Bar dataKey="paid" name="Paid" fill={MONEY_COLORS.paid} barSize={BAR_SIZE * 1.5} radius={RADIUS_VERTICAL} />
+                    <Bar isAnimationActive={false} dataKey="budget" name="Budget" fill={MONEY_COLORS.budget} barSize={BAR_SIZE * 1.5} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={linkTo('/budget-lines')} />
+                    <Bar isAnimationActive={false} dataKey="contracted" name="Contracted" fill={MONEY_COLORS.contracted} barSize={BAR_SIZE * 1.5} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={linkTo('/contracts')} />
+                    <Bar isAnimationActive={false} dataKey="paid" name="Paid" fill={MONEY_COLORS.paid} barSize={BAR_SIZE * 1.5} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={linkTo('/payments')} />
                 </BarChart>
             </ResponsiveContainer>
         </ChartCard>

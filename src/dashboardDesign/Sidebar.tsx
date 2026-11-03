@@ -1,21 +1,22 @@
 import React from 'react'
 import { NavLink } from 'react-router'
 import {
-    BarChart3, Briefcase, ClipboardList, CreditCard, FileSignature, History, LayoutDashboard,
-    ListTodo, Receipt, Settings, Users, Wallet, type LucideIcon,
+    BarChart3, Briefcase, ClipboardList, CreditCard, FileSignature, FileText, History, LayoutDashboard, Lightbulb,
+    ListChecks, ListTodo, Receipt, Repeat, Server, Settings, Table2, Users, Wallet, Wrench, type LucideIcon,
 } from 'lucide-react'
 import { useCurrentUser } from '../store/hooks'
+import type { UserRole } from '../types/Types'
 
 interface NavItem {
     name: string
     path: string
     icon: LucideIcon
+    roles?: UserRole[] // leave out for everyone
 }
 
 interface NavGroup {
     title: string
     items: NavItem[]
-    adminOnly?: boolean
 }
 
 // Sidebar menu, grouped by what staff do
@@ -28,8 +29,21 @@ const NAV_GROUPS: NavGroup[] = [
         ],
     },
     {
+        // One entry per sheet of the tracker workbook
+        title: 'Tracker Sheets',
+        items: [
+            { name: 'Assets: All list', path: '/tracker/all-list', icon: Table2 },
+            { name: 'Assets: Infra, Sw', path: '/tracker/assets-infra-sw', icon: Server },
+            { name: 'Maintenance & Support', path: '/tracker/maintenance-support', icon: Wrench },
+            { name: 'Consultancy', path: '/tracker/consultancy', icon: Lightbulb },
+            { name: 'Subscription & Support', path: '/tracker/subscription-support', icon: Repeat },
+            { name: 'Lists', path: '/lists', icon: ListChecks },
+        ],
+    },
+    {
         title: 'Tracking',
         items: [
+            { name: 'Memos', path: '/memos', icon: FileText },
             { name: 'Procurements', path: '/procurements', icon: ClipboardList },
             { name: 'Budget Lines', path: '/budget-lines', icon: Wallet },
             { name: 'Tasks', path: '/tasks', icon: ListTodo },
@@ -49,11 +63,10 @@ const NAV_GROUPS: NavGroup[] = [
     },
     {
         title: 'Administration',
-        adminOnly: true,
         items: [
-            { name: 'Users', path: '/admin/users', icon: Users },
-            { name: 'Settings', path: '/admin/settings', icon: Settings },
-            { name: 'Audit Log', path: '/admin/audit', icon: History },
+            { name: 'Users', path: '/admin/users', icon: Users, roles: ['sa'] },
+            { name: 'Settings', path: '/admin/settings', icon: Settings, roles: ['sa', 'admin'] },
+            { name: 'Audit Log', path: '/admin/audit', icon: History, roles: ['sa', 'admin'] },
         ],
     },
 ]
@@ -68,7 +81,10 @@ interface SidebarProps {
 // which always shows full labels.
 const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, collapsed, onNavigate }) => {
     const user = useCurrentUser()
-    const groups = NAV_GROUPS.filter((group) => !group.adminOnly || user?.role === 'admin')
+    // Only the items this role may open; a group with none left is hidden
+    const groups = NAV_GROUPS
+        .map((group) => ({ ...group, items: group.items.filter((item) => !item.roles || (user && item.roles.includes(user.role))) }))
+        .filter((group) => group.items.length > 0)
 
     return (
         <aside

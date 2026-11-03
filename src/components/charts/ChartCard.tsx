@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router'
 import { ChartColumn, Table2 } from 'lucide-react'
 import { EmptyState, ErrorState, LoadingState } from '../common/States'
 
@@ -24,6 +25,7 @@ interface ChartCardProps<Row> {
     emptyMessage?: string
     rows: Row[]
     columns: TableColumn<Row>[]
+    rowLink?: (row: Row) => string | undefined  // where a table row leads, as a click on the chart does
     actions?: React.ReactNode      // extra controls, e.g. a "per quarter / cumulative" switch
     children: React.ReactNode      // the chart itself
     className?: string
@@ -31,7 +33,7 @@ interface ChartCardProps<Row> {
 
 function ChartCard<Row>({
     title, subtitle, isLoading, error, isEmpty, emptyMessage = 'No data for this selection yet.',
-    rows, columns, actions, children, className = '',
+    rows, columns, rowLink, actions, children, className = '',
 }: ChartCardProps<Row>) {
     const [view, setView] = useState<'chart' | 'table'>('chart')
 
@@ -54,11 +56,15 @@ function ChartCard<Row>({
                     <tbody>
                         {rows.map((row, i) => (
                             <tr key={i}>
-                                {columns.map((col) => (
-                                    <td key={col.key} className={col.align === 'right' ? 'tabular text-right' : ''}>
-                                        {col.format ? col.format(row[col.key], row) : String(row[col.key] ?? '—')}
-                                    </td>
-                                ))}
+                                {columns.map((col, c) => {
+                                    const text = col.format ? col.format(row[col.key], row) : String(row[col.key] ?? '—')
+                                    const link = c === 0 ? rowLink?.(row) : undefined
+                                    return (
+                                        <td key={col.key} className={col.align === 'right' ? 'tabular text-right' : ''}>
+                                            {link ? <Link to={link} className="text-green-800 hover:underline">{text}</Link> : text}
+                                        </td>
+                                    )
+                                })}
                             </tr>
                         ))}
                     </tbody>

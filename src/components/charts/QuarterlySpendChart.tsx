@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useNavigate } from 'react-router'
 import { dashboardApi } from '../../features/api/DashboardApi'
 import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { DashboardFilters, QuarterSpend } from '../../types/Types'
 import { formatMoney, formatMoneyCompact } from '../../utils/format'
+import { drillContext, drillTo } from '../../utils/drill'
 import ChartCard, { type TableColumn } from './ChartCard'
 import ChartTooltip from './ChartTooltip'
 import { BAR_SIZE, CHROME, MONEY_COLORS, RADIUS_VERTICAL, tickStyle, legendText } from './chartTheme'
@@ -32,6 +34,15 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
     const { data, isLoading, error } = dashboardApi.useGetQuarterlySpendQuery(filters)
     const rows = (data?.data ?? []).map((row) => ({ ...row, label: QUARTER_MONTHS[row.quarter] ?? row.quarter }))
     const isEmpty = rows.every((row) => row.planned === 0 && row.actual === 0)
+    const navigate = useNavigate()
+    const context = drillContext(filters, data?.financial_year)
+
+    // Payments made in the quarter; the plan is on the budget lines
+    const paymentsIn = (row: { from_date: string; to_date: string }) => drillTo('/payments', context, { paid_from: row.from_date, paid_to: row.to_date })
+    const openQuarter = (state: { activeTooltipIndex?: unknown }) => {
+        const row = rows[Number(state?.activeTooltipIndex)]
+        if (row) navigate(paymentsIn(row))
+    }
 
     const axes = (
         <>
@@ -45,13 +56,14 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
     return (
         <ChartCard
             title="Planned vs actual spend"
-            subtitle="Quarterly plan from budget allocations vs payments made"
+            subtitle="Quarterly plan from budget allocations vs payments made · click to see them"
             isLoading={isLoading}
             error={error}
             isEmpty={isEmpty}
             emptyMessage="No quarterly plan or payments recorded for this year yet."
             rows={rows}
             columns={COLUMNS}
+            rowLink={paymentsIn}
             className={className}
             actions={
                 <div className="join" role="group" aria-label="Spend view">
@@ -65,15 +77,15 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
                     <BarChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barGap={2}>
                         {axes}
                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
-                        <Bar dataKey="planned" name="Planned" fill={MONEY_COLORS.planned} barSize={BAR_SIZE * 2} radius={RADIUS_VERTICAL} />
-                        <Bar dataKey="actual" name="Actual (paid)" fill={MONEY_COLORS.actual} barSize={BAR_SIZE * 2} radius={RADIUS_VERTICAL} />
+                        <Bar isAnimationActive={false} dataKey="planned" name="Planned" fill={MONEY_COLORS.planned} barSize={BAR_SIZE * 2} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={() => navigate(drillTo('/budget-lines', context))} />
+                        <Bar isAnimationActive={false} dataKey="actual" name="Actual (paid)" fill={MONEY_COLORS.actual} barSize={BAR_SIZE * 2} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={(entry) => navigate(paymentsIn(entry.payload as typeof rows[number]))} />
                     </BarChart>
                 ) : (
-                    <LineChart data={rows} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+                    <LineChart data={rows} margin={{ top: 4, right: 16, bottom: 0, left: 0 }} className="cursor-pointer" onClick={openQuarter}>
                         {axes}
                         <Tooltip cursor={{ stroke: CHROME.axis }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
-                        <Line dataKey="cumulative_planned" name="Planned to date" stroke={MONEY_COLORS.planned} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
-                        <Line dataKey="cumulative_actual" name="Paid to date" stroke={MONEY_COLORS.actual} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                        <Line isAnimationActive={false} dataKey="cumulative_planned" name="Planned to date" stroke={MONEY_COLORS.planned} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                        <Line isAnimationActive={false} dataKey="cumulative_actual" name="Paid to date" stroke={MONEY_COLORS.actual} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
                     </LineChart>
                 )}
             </ResponsiveContainer>

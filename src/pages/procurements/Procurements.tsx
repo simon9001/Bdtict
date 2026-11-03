@@ -7,6 +7,7 @@ import { useUrlFilters } from '../../hooks/useUrlFilters'
 import { useCurrentUser, useSelectedFy } from '../../store/hooks'
 import { PROCUREMENT_STATUSES, type ProcurementQuery, type ProcurementStatus } from '../../types/Types'
 import { canCreate } from '../../utils/permissions'
+import ActiveFilters from '../../components/common/ActiveFilters'
 import PageHeader from '../../components/common/PageHeader'
 import { PrimaryButton } from '../../components/common/Buttons'
 import StatusBadge from '../../components/common/StatusBadge'
@@ -24,19 +25,28 @@ const Procurements: React.FC = () => {
     const navigate = useNavigate()
     const user = useCurrentUser()
     const fyId = useSelectedFy()
-    const { categories, staff, stages } = useReferenceData()
+    const { categories, priorities, acquisitionMethods, staff, stages } = useReferenceData()
     const filters = useUrlFilters()
     const [showForm, setShowForm] = useState(false)
     const [searchText, setSearchText] = useState(filters.getString('search') ?? '')
 
     const query: ProcurementQuery = {
-        fy_id: fyId,
+        fy_id: filters.getNumber('fy_id') ?? fyId, // a chart link names the year it counted
         page: filters.page,
         limit: 25,
         status: filters.getString('status') as ProcurementStatus | undefined,
         category_id: filters.getNumber('category_id'),
         owner_id: filters.getNumber('owner_id'),
         stage_id: filters.getNumber('stage_id'),
+        priority_id: filters.getNumber('priority_id'),
+        no_priority: filters.getBool('no_priority'),
+        acquisition_method_id: filters.getNumber('acquisition_method_id'),
+        no_method: filters.getBool('no_method'),
+        stage_group: filters.getString('stage_group'),
+        no_stage: filters.getBool('no_stage'),
+        passed_stage_id: filters.getNumber('passed_stage_id'),
+        open_only: filters.getBool('open_only'),
+        statuses: filters.getString('statuses'),
         overdue: filters.getBool('overdue'),
         is_escalated: filters.getBool('is_escalated'),
         mine: filters.getBool('mine'),
@@ -87,6 +97,18 @@ const Procurements: React.FC = () => {
                     <option value="">Any step</option>
                     {stages.map((s) => <option key={s.stage_id} value={s.stage_id}>{s.name}</option>)}
                 </select>
+                <select className="select select-sm w-full border-gray-300 sm:w-36" value={query.no_priority ? 'none' : query.priority_id ?? ''} aria-label="Priority"
+                    onChange={(e) => filters.setFilters({ priority_id: e.target.value === 'none' ? undefined : e.target.value, no_priority: e.target.value === 'none' })}>
+                    <option value="">All priorities</option>
+                    {priorities.map((p) => <option key={p.lookup_id} value={p.lookup_id}>{p.value}</option>)}
+                    <option value="none">Not set</option>
+                </select>
+                <select className="select select-sm w-full border-gray-300 sm:w-44" value={query.no_method ? 'none' : query.acquisition_method_id ?? ''} aria-label="Acquisition method"
+                    onChange={(e) => filters.setFilters({ acquisition_method_id: e.target.value === 'none' ? undefined : e.target.value, no_method: e.target.value === 'none' })}>
+                    <option value="">All methods</option>
+                    {acquisitionMethods.map((m) => <option key={m.lookup_id} value={m.lookup_id}>{m.value}</option>)}
+                    <option value="none">Not set</option>
+                </select>
                 <label className="flex cursor-pointer items-center gap-1.5 text-sm text-gray-700">
                     <input type="checkbox" className="checkbox checkbox-xs" checked={!!query.mine} onChange={(e) => filters.setFilters({ mine: e.target.checked, owner_id: undefined })} />
                     Mine
@@ -110,6 +132,14 @@ const Procurements: React.FC = () => {
                     <button className="btn btn-ghost btn-sm" onClick={() => { setSearchText(''); filters.clearFilters() }}>Clear</button>
                 )}
             </div>
+
+            <ActiveFilters items={[
+                query.statuses && `Status: ${query.statuses.replace(',', ', ')}`,
+                query.stage_group && `Phase: ${query.stage_group}`,
+                query.no_stage && 'Not at any step yet',
+                query.passed_stage_id && `Completed step: ${stages.find((s) => s.stage_id === query.passed_stage_id)?.name ?? ''}`,
+                query.open_only && 'Open items only',
+            ]} />
 
             {/* Table */}
             <div className={`rounded-lg bg-white shadow-sm transition-opacity ${isFetching && !isLoading ? 'opacity-60' : ''}`}>

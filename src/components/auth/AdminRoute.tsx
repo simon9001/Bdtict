@@ -6,12 +6,12 @@ interface AdminRouteProps {
     children: React.ReactNode
 }
 
-// Head of ICT only (users, settings, audit). Others go back to the dashboard.
+// Head of ICT and system administrator (settings, audit). Others go back to the dashboard.
 // Used inside ProtectedRoute, so the user is already logged in here.
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     const user = useCurrentUser()
 
-    if (user?.role !== 'admin') {
+    if (user?.role !== 'admin' && user?.role !== 'sa') {
         return <Navigate to="/dashboard" replace />
     }
 

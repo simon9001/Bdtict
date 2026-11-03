@@ -33,7 +33,7 @@ export interface PageQuery {
 
 // ================================ Auth & users ==============================
 
-export type UserRole = 'admin' | 'officer' | 'viewer';
+export type UserRole = 'sa' | 'admin' | 'officer' | 'viewer';
 
 /** The logged-in user stored in the auth slice */
 export interface AuthUser {
@@ -85,7 +85,7 @@ export interface UserFormValues {
 
 // ================================= Settings =================================
 
-export type LookupType = 'category' | 'priority' | 'acquisition_method' | 'scm_officer';
+export type LookupType = 'category' | 'priority' | 'acquisition_method' | 'scm_officer' | 'section';
 
 export interface Lookup {
     lookup_id: number;
@@ -136,6 +136,8 @@ export interface BudgetLine {
     category: string;
     priority_id: number | null;
     priority: string | null;
+    section_id: number | null;
+    section: string | null;
     owner_id: number;
     owner_name: string;
     quantity: number;
@@ -163,6 +165,7 @@ export interface BudgetLineFormValues {
     description: string;
     category_id: number;
     priority_id?: number | null;
+    section_id?: number | null;
     owner_id?: number;
     quantity: number;
     unit_price: number;
@@ -204,6 +207,8 @@ export interface Procurement {
     acquisition_method: string | null;
     scm_officer_id: number | null;
     scm_officer: string | null;
+    section_id: number | null;
+    section: string | null;
     status: ProcurementStatus;
     current_stage_id: number | null;
     current_stage_code: string | null;
@@ -255,6 +260,7 @@ export interface ProcurementFormValues {
     priority_id?: number | null;
     acquisition_method_id?: number | null;
     scm_officer_id?: number | null;
+    section_id?: number | null;
     status: ProcurementStatus;
     tender_float_date?: string | null;
     tender_opening_date?: string | null;
@@ -278,6 +284,15 @@ export interface ProcurementQuery extends PageQuery {
     owner_id?: number;
     stage_id?: number;
     budget_line_id?: number;
+    priority_id?: number;
+    no_priority?: boolean;
+    acquisition_method_id?: number;
+    no_method?: boolean;
+    stage_group?: string;
+    no_stage?: boolean;
+    passed_stage_id?: number;
+    open_only?: boolean;
+    statuses?: string;
     is_escalated?: boolean;
     overdue?: boolean;
     mine?: boolean;
@@ -331,6 +346,7 @@ export interface ContractFormValues {
 export interface ContractQuery extends PageQuery {
     procurement_id?: number;
     fy_id?: number;
+    category_id?: number;
     owner_id?: number;
     status?: ContractStatus;
     expiring_within_days?: number;
@@ -404,6 +420,11 @@ export interface InvoiceQuery extends PageQuery {
     contract_id?: number;
     procurement_id?: number;
     fy_id?: number;
+    category_id?: number;
+    age_min?: number;
+    age_max?: number;
+    received_from?: string;
+    received_to?: string;
     owner_id?: number;
     status?: InvoiceStatus;
     unpaid_only?: boolean;
@@ -422,6 +443,8 @@ export interface PaymentQuery extends PageQuery {
     invoice_id?: number;
     contract_id?: number;
     fy_id?: number;
+    category_id?: number;
+    owner_id?: number;
     paid_from?: string;
     paid_to?: string;
 }
@@ -443,6 +466,8 @@ export interface Task {
     owner_name: string;
     procurement_id: number | null;
     procurement_title: string | null;
+    section_id: number | null;
+    section: string | null;
     priority_id: number | null;
     priority: string | null;
     due_date: string | null;
@@ -457,9 +482,110 @@ export interface TaskFormValues {
     description?: string | null;
     owner_id?: number;
     procurement_id?: number | null;
+    section_id?: number | null;
     priority_id?: number | null;
     due_date?: string | null;
     status: TaskStatus;
+}
+
+// =================================== Memos ==================================
+
+export const DG_STATUSES = ['Pending', 'Approved', 'Rejected', 'Returned'] as const;
+export type DgStatus = (typeof DG_STATUSES)[number];
+
+export interface Memo {
+    memo_id: number;
+    reference: string | null;
+    title: string;
+    fy_id: number;
+    fy_code: string;
+    owner_id: number;
+    owner_name: string;
+    category_id: number;
+    category: string;
+    priority_id: number | null;
+    priority: string | null;
+    delivered_date: string | null;
+    approved_date: string | null;
+    dg_status: DgStatus | null;
+    status: ProcurementStatus;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface MemoFormValues {
+    reference?: string | null;
+    title: string;
+    fy_id: number;
+    owner_id?: number;
+    category_id: number;
+    priority_id?: number | null;
+    delivered_date?: string | null;
+    approved_date?: string | null;
+    dg_status?: DgStatus | null;
+    status: ProcurementStatus;
+    notes?: string | null;
+}
+
+export interface MemoQuery extends PageQuery {
+    fy_id?: number;
+    status?: ProcurementStatus;
+    category_id?: number;
+    owner_id?: number;
+}
+
+// ================================== Tracker =================================
+
+export interface TrackerStep {
+    status: StageEventStatus;
+    event_date: string;
+}
+
+export interface TrackerProcurement {
+    procurement_id: number;
+    reference: string | null;
+    title: string;
+    section_id: number | null;
+    budget_line_id: number | null;
+    owner_name: string;
+    category: string;
+    priority: string | null;
+    status: ProcurementStatus;
+    scm_officer: string | null;
+    acquisition_method: string | null;
+    tender_float_date: string | null;
+    tender_opening_date: string | null;
+    tender_days: number | null;
+    is_escalated: boolean;
+    escalated_to: string | null;
+    progress_percent: number | null;
+    notes: string | null;
+    steps: Record<string, TrackerStep>;
+}
+
+export interface TrackerBudgetLine {
+    budget_line_id: number;
+    code: string | null;
+    description: string;
+    section_id: number | null;
+    category: string;
+    priority: string | null;
+    quantity: number;
+    unit_price: number;
+    total_amount: number;
+    owner_name: string;
+    allocations: { fy_id: number; planned_amount: number; q1_amount: number; q2_amount: number; q3_amount: number; q4_amount: number }[];
+}
+
+export interface TrackerData {
+    sections: { section_id: number; name: string; sort_order: number }[];
+    stages: { stage_id: number; code: string; name: string; stage_group: string; sort_order: number }[];
+    financial_years: { fy_id: number; code: string }[];
+    budget_lines: TrackerBudgetLine[];
+    procurements: TrackerProcurement[];
+    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'owner_name' | 'category' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes'>[];
+    tasks: { task_id: number; title: string; section_id: number | null; owner_name: string; priority: string | null; due_date: string | null; status: TaskStatus }[];
 }
 
 export interface TaskQuery extends PageQuery {
@@ -505,9 +631,55 @@ export interface DashboardSummary {
     };
 }
 
+export interface NamedCount {
+    id?: number | null; // lookup id, where the name is a lookup value
+    name: string;
+    value: number;
+}
+
+export interface DashboardBreakdowns {
+    status: NamedCount[];
+    priority: NamedCount[];
+    method: NamedCount[];
+    contract_status: NamedCount[];
+    invoice_status: NamedCount[];
+    task_status: NamedCount[];
+}
+
+export interface ActivitySummary {
+    total: number;
+    completed: number;
+    by_status: NamedCount[];
+    by_priority: NamedCount[];
+    overdue: number;
+    escalated: number;
+    completion_rate_percent: number;
+}
+
+export interface MonthlyTrend {
+    month: string;
+    from_date: string;
+    to_date: string;
+    invoiced: number;
+    paid: number;
+}
+
+export interface TopBudgetLine {
+    budget_line_id: number;
+    code: string | null;
+    description: string;
+    planned_amount: number;
+}
+
+export interface RecentActivity {
+    steps: { event_id: number; procurement_id: number; title: string; stage_name: string; status: StageEventStatus; event_date: string; recorded_by_name: string }[];
+    payments: { payment_id: number; amount: number; payment_date: string; reference: string | null; supplier_name: string; invoice_id: number; invoice_number: string }[];
+}
+
 export interface CategoryBudget {
     category_id: number;
     category: string;
+    sort_order: number;
     budget: number;
     contracted: number;
     paid: number;
@@ -515,6 +687,8 @@ export interface CategoryBudget {
 
 export interface QuarterSpend {
     quarter: string;
+    from_date: string;
+    to_date: string;
     planned: number;
     actual: number;
     cumulative_planned: number;

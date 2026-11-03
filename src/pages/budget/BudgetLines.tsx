@@ -27,7 +27,7 @@ const BudgetLines: React.FC = () => {
     const [searchText, setSearchText] = useState(filters.getString('search') ?? '')
 
     // Lines with planned spend in the selected (or current) year
-    const effectiveFy = fyId ?? currentYear?.fy_id
+    const effectiveFy = filters.getNumber('fy_id') ?? fyId ?? currentYear?.fy_id
     const { data, isLoading, isFetching, error, refetch } = budgetLineApi.useGetBudgetLinesQuery(
         {
             fy_id: effectiveFy,

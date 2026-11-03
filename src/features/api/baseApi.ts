@@ -37,9 +37,13 @@ const baseQueryWithLogout: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const baseApi = createApi({
     reducerPath: 'api',
     baseQuery: baseQueryWithLogout,
+    // Going back to a page shows what is already loaded at once, and updates it
+    // quietly if it is more than 30 seconds old
+    keepUnusedDataFor: 300,
+    refetchOnMountOrArgChange: 30,
     tagTypes: [
         'Users', 'Lookups', 'FinancialYears', 'WorkflowStages',
-        'BudgetLines', 'Procurements', 'Contracts', 'Invoices', 'Payments', 'Tasks',
+        'BudgetLines', 'Procurements', 'Contracts', 'Invoices', 'Payments', 'Tasks', 'Memos',
         'Dashboard', 'AuditLogs',
     ],
     endpoints: () => ({}),

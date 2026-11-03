@@ -5,6 +5,7 @@ import { dashboardApi } from '../../features/api/DashboardApi'
 import { useIsSmallScreen } from '../../hooks/useMediaQuery'
 import type { DashboardFilters, PipelineStage } from '../../types/Types'
 import { formatNumber } from '../../utils/format'
+import { drillContext, drillTo } from '../../utils/drill'
 import ChartCard, { type TableColumn } from './ChartCard'
 import ChartTooltip from './ChartTooltip'
 import { BAR_SIZE, CHROME, RADIUS_HORIZONTAL, SERIES, STATUS, tickStyle, legendText } from './chartTheme'
@@ -35,10 +36,13 @@ const PipelineChart: React.FC<{ filters: DashboardFilters; className?: string }>
     const small = useIsSmallScreen()
     const height = Math.max(200, rows.length * (small ? 52 : 36) + 60)
 
-    const openStage = (row: Row) => {
-        if (row.stage_id) navigate(`/procurements?stage_id=${row.stage_id}`)
-        else navigate('/procurements?status=Not%20Started')
-    }
+    // Open items only, as counted here; the overdue part of a bar opens just those
+    const context = drillContext(filters, data?.financial_year)
+    const stageLink = (row: Row, overdue?: boolean) => drillTo('/procurements', context, {
+        open_only: true,
+        overdue,
+        ...(row.stage_id ? { stage_id: row.stage_id } : { no_stage: true }),
+    })
 
     return (
         <ChartCard
@@ -50,6 +54,7 @@ const PipelineChart: React.FC<{ filters: DashboardFilters; className?: string }>
             emptyMessage="No open procurements for this selection."
             rows={rows}
             columns={COLUMNS}
+            rowLink={(row) => stageLink(row)}
             className={className}
         >
             <ResponsiveContainer width="100%" height={height}>
@@ -60,10 +65,10 @@ const PipelineChart: React.FC<{ filters: DashboardFilters; className?: string }>
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={(v) => formatNumber(v)} />} />
                     <Legend verticalAlign="top" align="left" iconType="square" height={32} formatter={legendText} itemSorter={null} />
                     {/* 2px white stroke = surface gap between the stacked segments */}
-                    <Bar dataKey="on_track" name="On track" stackId="items" fill={SERIES.blue} barSize={BAR_SIZE} stroke="#fff" strokeWidth={2}
-                        className="cursor-pointer" onClick={(entry) => openStage(entry.payload as Row)} />
-                    <Bar dataKey="overdue" name="Overdue" stackId="items" fill={STATUS.critical} barSize={BAR_SIZE} radius={RADIUS_HORIZONTAL}
-                        stroke="#fff" strokeWidth={2} className="cursor-pointer" onClick={(entry) => openStage(entry.payload as Row)} />
+                    <Bar isAnimationActive={false} dataKey="on_track" name="On track" stackId="items" fill={SERIES.blue} barSize={BAR_SIZE} stroke="#fff" strokeWidth={2}
+                        className="cursor-pointer" onClick={(entry) => navigate(stageLink(entry.payload as Row))} />
+                    <Bar isAnimationActive={false} dataKey="overdue" name="Overdue" stackId="items" fill={STATUS.critical} barSize={BAR_SIZE} radius={RADIUS_HORIZONTAL}
+                        stroke="#fff" strokeWidth={2} className="cursor-pointer" onClick={(entry) => navigate(stageLink(entry.payload as Row, true))} />
                 </BarChart>
             </ResponsiveContainer>
         </ChartCard>
