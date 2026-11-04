@@ -8,6 +8,7 @@ import { useCurrentUser, useSelectedFy } from '../../store/hooks'
 import { canCreate } from '../../utils/permissions'
 import { formatMoney, formatNumber } from '../../utils/format'
 import PageHeader from '../../components/common/PageHeader'
+import QuarterSelect from '../../components/common/QuarterSelect'
 import { PrimaryButton } from '../../components/common/Buttons'
 import Pagination from '../../components/common/Pagination'
 import { EmptyState, ErrorState, LoadingState } from '../../components/common/States'
@@ -31,6 +32,7 @@ const BudgetLines: React.FC = () => {
     const { data, isLoading, isFetching, error, refetch } = budgetLineApi.useGetBudgetLinesQuery(
         {
             fy_id: effectiveFy,
+            quarter: filters.getNumber('quarter'),
             category_id: filters.getNumber('category_id'),
             owner_id: filters.getNumber('owner_id'),
             search: filters.getString('search'),
@@ -56,6 +58,7 @@ const BudgetLines: React.FC = () => {
                         value={searchText} onChange={(e) => setSearchText(e.target.value)} aria-label="Search" />
                     <button className="btn btn-sm join-item" aria-label="Search"><Search size={16} /></button>
                 </form>
+                <QuarterSelect value={filters.getNumber('quarter')} onChange={(quarter) => filters.setFilters({ quarter })} />
                 <select className="select select-sm w-full border-gray-300 sm:w-52" value={filters.getNumber('category_id') ?? ''} aria-label="Category"
                     onChange={(e) => filters.setFilters({ category_id: e.target.value })}>
                     <option value="">All categories</option>

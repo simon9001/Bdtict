@@ -10,6 +10,7 @@ import { canCreate } from '../../utils/permissions'
 import { formatDate, formatMoney } from '../../utils/format'
 import ActiveFilters from '../../components/common/ActiveFilters'
 import PageHeader from '../../components/common/PageHeader'
+import QuarterSelect from '../../components/common/QuarterSelect'
 import { PrimaryButton } from '../../components/common/Buttons'
 import StatusBadge from '../../components/common/StatusBadge'
 import Pagination from '../../components/common/Pagination'
@@ -34,6 +35,7 @@ const Contracts: React.FC = () => {
     const { data, isLoading, isFetching, error, refetch } = contractApi.useGetContractsQuery({
         fy_id: expiring ? undefined : filters.getNumber('fy_id') ?? fyId,
         category_id: filters.getNumber('category_id'),
+        quarter: expiring ? undefined : filters.getNumber('quarter'),
         status: filters.getString('status') as ContractStatus | undefined,
         owner_id: filters.getNumber('owner_id'),
         expiring_within_days: expiring,
@@ -57,6 +59,7 @@ const Contracts: React.FC = () => {
                         value={searchText} onChange={(e) => setSearchText(e.target.value)} aria-label="Search" />
                     <button className="btn btn-sm join-item" aria-label="Search"><Search size={16} /></button>
                 </form>
+                <QuarterSelect value={filters.getNumber('quarter')} onChange={(quarter) => filters.setFilters({ quarter })} />
                 <select className="select select-sm w-full border-gray-300 sm:w-40" value={filters.getString('status') ?? ''} aria-label="Status"
                     onChange={(e) => filters.setFilters({ status: e.target.value })}>
                     <option value="">All statuses</option>

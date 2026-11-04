@@ -4,12 +4,13 @@ import { Plus, Search } from 'lucide-react'
 import { invoiceApi } from '../../features/api/InvoiceApi'
 import { useReferenceData } from '../../hooks/useReferenceData'
 import { useUrlFilters } from '../../hooks/useUrlFilters'
-import { useCurrentUser } from '../../store/hooks'
+import { useCurrentUser, useSelectedFy } from '../../store/hooks'
 import { INVOICE_STATUSES, type InvoiceStatus } from '../../types/Types'
 import { canCreate } from '../../utils/permissions'
 import { formatDate, formatMoney } from '../../utils/format'
 import ActiveFilters from '../../components/common/ActiveFilters'
 import PageHeader from '../../components/common/PageHeader'
+import QuarterSelect from '../../components/common/QuarterSelect'
 import { PrimaryButton } from '../../components/common/Buttons'
 import StatusBadge from '../../components/common/StatusBadge'
 import Pagination from '../../components/common/Pagination'
@@ -23,6 +24,7 @@ import InvoiceFormModal from '../../components/invoices/InvoiceFormModal'
 const Invoices: React.FC = () => {
     const navigate = useNavigate()
     const user = useCurrentUser()
+    const fyId = useSelectedFy()
     const { categories, staff } = useReferenceData()
     const filters = useUrlFilters()
     const [showForm, setShowForm] = useState(false)
@@ -31,7 +33,8 @@ const Invoices: React.FC = () => {
     const { data, isLoading, isFetching, error, refetch } = invoiceApi.useGetInvoicesQuery({
         status: filters.getString('status') as InvoiceStatus | undefined,
         owner_id: filters.getNumber('owner_id'),
-        fy_id: filters.getNumber('fy_id'),
+        fy_id: filters.getNumber('fy_id') ?? (filters.getNumber('quarter') ? fyId : undefined), // a quarter belongs to a year
+        quarter: filters.getNumber('quarter'),
         category_id: filters.getNumber('category_id'),
         age_min: filters.getNumber('age_min'),
         age_max: filters.getNumber('age_max'),
@@ -58,6 +61,7 @@ const Invoices: React.FC = () => {
                         value={searchText} onChange={(e) => setSearchText(e.target.value)} aria-label="Search" />
                     <button className="btn btn-sm join-item" aria-label="Search"><Search size={16} /></button>
                 </form>
+                <QuarterSelect value={filters.getNumber('quarter')} onChange={(quarter) => filters.setFilters({ quarter })} />
                 <select className="select select-sm w-full border-gray-300 sm:w-40" value={filters.getString('status') ?? ''} aria-label="Status"
                     onChange={(e) => filters.setFilters({ status: e.target.value })}>
                     <option value="">All statuses</option>

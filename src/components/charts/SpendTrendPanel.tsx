@@ -37,10 +37,11 @@ const SpendTrendPanel: React.FC<SpendTrendPanelProps> = ({ filters, summary, fyC
     const hasMovement = rows.some((row) => row.paid > 0 || row.invoiced > 0)
     const navigate = useNavigate()
     const context = drillContext(filters, data?.financial_year)
+    const monthContext = { ...context, quarter: undefined }
 
     const openMonth = (state: { activeTooltipIndex?: unknown }) => {
         const row = rows[Number(state?.activeTooltipIndex)]
-        if (row) navigate(drillTo('/payments', context, { paid_from: row.from_date, paid_to: row.to_date }))
+        if (row) navigate(drillTo('/payments', monthContext, { paid_from: row.from_date, paid_to: row.to_date }))
     }
     const committedPercent = summary && summary.budget > 0 ? Math.round((summary.contracted / summary.budget) * 1000) / 10 : 0
 

@@ -35,7 +35,7 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
     const rows = (data?.data ?? []).map((row) => ({ ...row, label: QUARTER_MONTHS[row.quarter] ?? row.quarter }))
     const isEmpty = rows.every((row) => row.planned === 0 && row.actual === 0)
     const navigate = useNavigate()
-    const context = drillContext(filters, data?.financial_year)
+    const context = { ...drillContext(filters, data?.financial_year), quarter: undefined }
 
     // Payments made in the quarter; the plan is on the budget lines
     const paymentsIn = (row: { from_date: string; to_date: string }) => drillTo('/payments', context, { paid_from: row.from_date, paid_to: row.to_date })

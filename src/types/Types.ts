@@ -174,6 +174,7 @@ export interface BudgetLineFormValues {
 
 export interface BudgetLineQuery extends PageQuery {
     fy_id?: number;
+    quarter?: number;
     category_id?: number;
     owner_id?: number;
     search?: string;
@@ -279,6 +280,7 @@ export interface StageEventFormValues {
 
 export interface ProcurementQuery extends PageQuery {
     fy_id?: number;
+    quarter?: number;
     status?: ProcurementStatus;
     category_id?: number;
     owner_id?: number;
@@ -346,6 +348,7 @@ export interface ContractFormValues {
 export interface ContractQuery extends PageQuery {
     procurement_id?: number;
     fy_id?: number;
+    quarter?: number;
     category_id?: number;
     owner_id?: number;
     status?: ContractStatus;
@@ -420,6 +423,7 @@ export interface InvoiceQuery extends PageQuery {
     contract_id?: number;
     procurement_id?: number;
     fy_id?: number;
+    quarter?: number;
     category_id?: number;
     age_min?: number;
     age_max?: number;
@@ -443,6 +447,7 @@ export interface PaymentQuery extends PageQuery {
     invoice_id?: number;
     contract_id?: number;
     fy_id?: number;
+    quarter?: number;
     category_id?: number;
     owner_id?: number;
     paid_from?: string;
@@ -530,6 +535,7 @@ export interface MemoFormValues {
 
 export interface MemoQuery extends PageQuery {
     fy_id?: number;
+    quarter?: number;
     status?: ProcurementStatus;
     category_id?: number;
     owner_id?: number;
@@ -548,11 +554,16 @@ export interface TrackerProcurement {
     title: string;
     section_id: number | null;
     budget_line_id: number | null;
+    owner_id: number;
     owner_name: string;
+    category_id: number;
     category: string;
+    priority_id: number | null;
     priority: string | null;
     status: ProcurementStatus;
+    scm_officer_id: number | null;
     scm_officer: string | null;
+    acquisition_method_id: number | null;
     acquisition_method: string | null;
     tender_float_date: string | null;
     tender_opening_date: string | null;
@@ -569,11 +580,14 @@ export interface TrackerBudgetLine {
     code: string | null;
     description: string;
     section_id: number | null;
+    category_id: number;
     category: string;
+    priority_id: number | null;
     priority: string | null;
     quantity: number;
     unit_price: number;
     total_amount: number;
+    owner_id: number;
     owner_name: string;
     allocations: { fy_id: number; planned_amount: number; q1_amount: number; q2_amount: number; q3_amount: number; q4_amount: number }[];
 }
@@ -581,14 +595,16 @@ export interface TrackerBudgetLine {
 export interface TrackerData {
     sections: { section_id: number; name: string; sort_order: number }[];
     stages: { stage_id: number; code: string; name: string; stage_group: string; sort_order: number }[];
-    financial_years: { fy_id: number; code: string }[];
+    financial_years: { fy_id: number; code: string; start_date: string }[];
     budget_lines: TrackerBudgetLine[];
     procurements: TrackerProcurement[];
-    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'owner_name' | 'category' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes'>[];
-    tasks: { task_id: number; title: string; section_id: number | null; owner_name: string; priority: string | null; due_date: string | null; status: TaskStatus }[];
+    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'owner_id' | 'owner_name' | 'category_id' | 'category' | 'priority_id' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes'>[];
+    tasks: { task_id: number; title: string; section_id: number | null; owner_id: number; owner_name: string; priority_id: number | null; priority: string | null; due_date: string | null; status: TaskStatus; created_at: string }[];
 }
 
 export interface TaskQuery extends PageQuery {
+    fy_id?: number;
+    quarter?: number;
     owner_id?: number;
     procurement_id?: number;
     status?: TaskStatus;
@@ -601,6 +617,7 @@ export interface TaskQuery extends PageQuery {
 
 /** Filters shared by every dashboard endpoint */
 export interface DashboardFilters {
+    quarter?: number;
     fy_id?: number;
     category_id?: number;
     owner_id?: number;
@@ -687,6 +704,7 @@ export interface CategoryBudget {
 
 export interface QuarterSpend {
     quarter: string;
+    year_planned: number; // the whole year's plan, to show what is not split into quarters
     from_date: string;
     to_date: string;
     planned: number;

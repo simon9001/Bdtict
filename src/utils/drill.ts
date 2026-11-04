@@ -11,6 +11,7 @@ export interface DrillContext {
     fy_id?: number
     category_id?: number
     owner_id?: number
+    quarter?: number
 }
 
 type DrillParams = Record<string, string | number | boolean | null | undefined>
@@ -20,6 +21,7 @@ export const drillContext = (filters: Omit<DashboardFilters, 'fy_id'> & { fy_id?
     fy_id: fy?.fy_id ?? filters.fy_id,
     category_id: filters.category_id,
     owner_id: filters.owner_id,
+    quarter: filters.quarter,
 })
 
 /** /procurements?fy_id=2&status=Completed */
@@ -28,4 +30,4 @@ export const drillTo = (path: string, context: DrillContext, params: DrillParams
 
 /** The same link without the year, for lists that are not limited to one */
 export const drillWithoutYear = (path: string, context: DrillContext, params: DrillParams = {}): string =>
-    drillTo(path, { ...context, fy_id: undefined }, params)
+    drillTo(path, { ...context, fy_id: context.quarter ? context.fy_id : undefined }, params) // a quarter belongs to a year

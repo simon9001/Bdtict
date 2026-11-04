@@ -9,6 +9,7 @@ import { PROCUREMENT_STATUSES, type ProcurementQuery, type ProcurementStatus } f
 import { canCreate } from '../../utils/permissions'
 import ActiveFilters from '../../components/common/ActiveFilters'
 import PageHeader from '../../components/common/PageHeader'
+import QuarterSelect from '../../components/common/QuarterSelect'
 import { PrimaryButton } from '../../components/common/Buttons'
 import StatusBadge from '../../components/common/StatusBadge'
 import ProgressBar from '../../components/common/ProgressBar'
@@ -32,6 +33,7 @@ const Procurements: React.FC = () => {
 
     const query: ProcurementQuery = {
         fy_id: filters.getNumber('fy_id') ?? fyId, // a chart link names the year it counted
+        quarter: filters.getNumber('quarter'),
         page: filters.page,
         limit: 25,
         status: filters.getString('status') as ProcurementStatus | undefined,
@@ -97,6 +99,7 @@ const Procurements: React.FC = () => {
                     <option value="">Any step</option>
                     {stages.map((s) => <option key={s.stage_id} value={s.stage_id}>{s.name}</option>)}
                 </select>
+                <QuarterSelect value={filters.getNumber('quarter')} onChange={(quarter) => filters.setFilters({ quarter })} />
                 <select className="select select-sm w-full border-gray-300 sm:w-36" value={query.no_priority ? 'none' : query.priority_id ?? ''} aria-label="Priority"
                     onChange={(e) => filters.setFilters({ priority_id: e.target.value === 'none' ? undefined : e.target.value, no_priority: e.target.value === 'none' })}>
                     <option value="">All priorities</option>

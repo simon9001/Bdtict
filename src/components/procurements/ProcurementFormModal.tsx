@@ -19,10 +19,11 @@ interface ProcurementFormModalProps {
     onClose: () => void
     procurement?: Procurement           // edit mode when given
     onSaved?: (procurementId: number) => void
+    defaultSectionId?: number           // new rows added from a sheet section
 }
 
 // Create or edit a procurement
-const ProcurementFormModal: React.FC<ProcurementFormModalProps> = ({ open, onClose, procurement, onSaved }) => {
+const ProcurementFormModal: React.FC<ProcurementFormModalProps> = ({ open, onClose, procurement, onSaved, defaultSectionId }) => {
     const user = useCurrentUser()
     const selectedFy = useSelectedFy()
     const ref = useReferenceData()
@@ -66,8 +67,9 @@ const ProcurementFormModal: React.FC<ProcurementFormModalProps> = ({ open, onClo
             owner_id: user?.user_id,
             status: 'Not Started',
             is_escalated: false,
+            section_id: defaultSectionId ?? null,
         })
-    }, [open, procurement, reset, selectedFy, ref.currentYear, user])
+    }, [open, procurement, reset, selectedFy, ref.currentYear, user, defaultSectionId])
 
     // Budget lines arrive after the form is filled: re-apply the saved choice so the select shows it
     useEffect(() => {

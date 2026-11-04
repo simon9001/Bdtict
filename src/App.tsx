@@ -5,6 +5,7 @@ import { Navigate, RouterProvider, createBrowserRouter } from 'react-router'
 import DashboardLayout from './dashboardDesign/DashboardLayout'
 
 // Route protection components
+import RouteError from './components/common/RouteError'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import AdminRoute from './components/auth/AdminRoute'
 import PublicRoute from './components/auth/PublicRoute'
@@ -30,11 +31,12 @@ const guardedPage = (Guard: React.ComponentType<{ children: React.ReactNode }>, 
  */
 const router = createBrowserRouter([
     // Public
-    { path: '/login', element: <PublicRoute><Login /></PublicRoute> },
+    { path: '/login', element: <PublicRoute><Login /></PublicRoute>, errorElement: <RouteError /> },
 
     // Logged-in staff (any role)
     {
         element: <ProtectedRoute><DashboardLayout /></ProtectedRoute>,
+        errorElement: <RouteError />,
         children: [
             { path: '/', element: <Navigate to="/dashboard" replace /> },
             { path: '/dashboard', lazy: lazyPage(() => import('./pages/Dashboard')) },

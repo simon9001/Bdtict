@@ -5,13 +5,14 @@ import { CircleCheck, Pencil, Plus, Trash2 } from 'lucide-react'
 import { taskApi } from '../features/api/TaskApi'
 import { useReferenceData } from '../hooks/useReferenceData'
 import { useUrlFilters } from '../hooks/useUrlFilters'
-import { useCurrentUser } from '../store/hooks'
+import { useCurrentUser, useSelectedFy } from '../store/hooks'
 import { TASK_STATUSES, type Task, type TaskStatus } from '../types/Types'
 import { canCreate, canEditOwned } from '../utils/permissions'
 import { confirmAction } from '../utils/confirm'
 import { getErrorMessage } from '../utils/errors'
 import { formatDate } from '../utils/format'
 import PageHeader from '../components/common/PageHeader'
+import QuarterSelect from '../components/common/QuarterSelect'
 import { IconButton, PrimaryButton } from '../components/common/Buttons'
 import StatusBadge from '../components/common/StatusBadge'
 import Pagination from '../components/common/Pagination'
@@ -24,6 +25,7 @@ import TaskFormModal from '../components/tasks/TaskFormModal'
  */
 const Tasks: React.FC = () => {
     const user = useCurrentUser()
+    const fyId = useSelectedFy()
     const { staff } = useReferenceData()
     const filters = useUrlFilters()
     const [form, setForm] = useState<{ open: boolean; task?: Task }>({ open: false })
@@ -31,6 +33,8 @@ const Tasks: React.FC = () => {
     const status = filters.getString('status') as TaskStatus | undefined
     const showAll = filters.getBool('all')
     const { data, isLoading, isFetching, error, refetch } = taskApi.useGetTasksQuery({
+        fy_id: filters.getNumber('fy_id') ?? fyId,
+        quarter: filters.getNumber('quarter'),
         status,
         open_only: !status && !showAll ? true : undefined,
         owner_id: filters.getNumber('owner_id'),
@@ -71,6 +75,7 @@ const Tasks: React.FC = () => {
             />
 
             <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-white p-3 shadow-sm">
+                <QuarterSelect value={filters.getNumber('quarter')} onChange={(quarter) => filters.setFilters({ quarter })} />
                 <select className="select select-sm w-full border-gray-300 sm:w-44" value={status ?? (showAll ? 'all' : '')} aria-label="Status"
                     onChange={(e) => filters.setFilters({ status: ['', 'all'].includes(e.target.value) ? undefined : e.target.value, all: e.target.value === 'all' })}>
                     <option value="">Open tasks</option>

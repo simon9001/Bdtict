@@ -18,10 +18,11 @@ interface BudgetLineFormModalProps {
     onClose: () => void
     budgetLine?: BudgetLine   // edit mode
     onSaved?: (budgetLineId: number) => void
+    defaultSectionId?: number // new rows added from a sheet section
 }
 
 // Create or edit a budget line (what the department plans to buy)
-const BudgetLineFormModal: React.FC<BudgetLineFormModalProps> = ({ open, onClose, budgetLine, onSaved }) => {
+const BudgetLineFormModal: React.FC<BudgetLineFormModalProps> = ({ open, onClose, budgetLine, onSaved, defaultSectionId }) => {
     const user = useCurrentUser()
     const ref = useReferenceData()
     const isEdit = !!budgetLine
@@ -45,8 +46,8 @@ const BudgetLineFormModal: React.FC<BudgetLineFormModalProps> = ({ open, onClose
             quantity: budgetLine.quantity,
             unit_price: budgetLine.unit_price,
             notes: budgetLine.notes,
-        } : { quantity: 1, owner_id: user?.user_id })
-    }, [open, budgetLine, user, reset])
+        } : { quantity: 1, owner_id: user?.user_id, section_id: defaultSectionId ?? null })
+    }, [open, budgetLine, user, reset, defaultSectionId])
 
     const onSubmit: SubmitHandler<BudgetLineFormValues> = async (values) => {
         const body = isAdmin(user) ? values : { ...values, owner_id: undefined }

@@ -17,10 +17,11 @@ interface TaskFormModalProps {
     onClose: () => void
     task?: Task              // edit mode
     procurementId?: number   // link a new task to this procurement
+    defaultSectionId?: number // new rows added from a sheet section
 }
 
 // Create or edit a follow-up task
-const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, procurementId }) => {
+const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, procurementId, defaultSectionId }) => {
     const user = useCurrentUser()
     const { priorities, sections, staff } = useReferenceData()
     const isEdit = !!task
@@ -40,8 +41,8 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
             section_id: task.section_id,
             due_date: toDateInput(task.due_date) || null,
             status: task.status,
-        } : { owner_id: user?.user_id, procurement_id: procurementId ?? null, status: 'Open' })
-    }, [open, task, procurementId, user, reset])
+        } : { owner_id: user?.user_id, procurement_id: procurementId ?? null, section_id: defaultSectionId ?? null, status: 'Open' })
+    }, [open, task, procurementId, user, reset, defaultSectionId])
 
     const onSubmit: SubmitHandler<TaskFormValues> = async (values) => {
         const body = isAdmin(user) ? values : { ...values, owner_id: undefined }

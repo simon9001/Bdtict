@@ -14,7 +14,8 @@ import RenderWhenNear from '../components/common/RenderWhenNear'
 import StatusBadge from '../components/common/StatusBadge'
 import { EscalatedBadge, OverdueBadge } from '../components/common/FlagBadges'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
-import DashboardFilterBar from '../components/common/DashboardFilterBar'
+import DashboardFilterBar, { type DashboardExtraFilters } from '../components/common/DashboardFilterBar'
+import QuarterStrip from '../components/charts/QuarterStrip'
 import BudgetByCategoryChart from '../components/charts/BudgetByCategoryChart'
 import ChartCard, { type TableColumn } from '../components/charts/ChartCard'
 import DonutChart, { type DonutSlice } from '../components/charts/DonutChart'
@@ -143,9 +144,9 @@ const Dashboard: React.FC = () => {
     const user = useCurrentUser()
     const navigate = useNavigate()
     const fyId = useSelectedFy()
-    const [extra, setExtra] = useState<{ categoryId?: number; ownerId?: number }>({})
+    const [extra, setExtra] = useState<DashboardExtraFilters>({})
 
-    const filters: DashboardFilters = { fy_id: fyId, category_id: extra.categoryId, owner_id: extra.ownerId }
+    const filters: DashboardFilters = { fy_id: fyId, category_id: extra.categoryId, owner_id: extra.ownerId, quarter: extra.quarter }
 
     const { data: summaryRes, isLoading, error } = dashboardApi.useGetSummaryQuery(filters)
     const { data: activityRes, isLoading: activityLoading, error: activityError } = dashboardApi.useGetActivitySummaryQuery(filters)
@@ -173,7 +174,7 @@ const Dashboard: React.FC = () => {
         value: row.budget,
         color: CATEGORICAL[row.sort_order - 1] ?? CHROME.tick,
         href: drillTo('/budget-lines', drillContext(filters, categoryRes?.financial_year), { category_id: row.category_id }),
-    })), [categoryRes, filters.category_id, filters.owner_id, filters.fy_id])
+    })), [categoryRes, filters.category_id, filters.owner_id, filters.fy_id, filters.quarter])
 
     // Open items per phase of the process, including phases nothing has reached
     const phases = useMemo(() => PHASES.map((phase) => {
@@ -186,7 +187,9 @@ const Dashboard: React.FC = () => {
         <>
             <PageHeader title="ICT Department Dashboard" subtitle={`${fyCode ? `Financial year ${fyCode}` : 'Loading financial year...'} · Welcome, ${user?.full_name} · Click any chart or figure to see the records behind it`} />
 
-            <DashboardFilterBar categoryId={extra.categoryId} ownerId={extra.ownerId} onChange={setExtra} />
+            <DashboardFilterBar {...extra} onChange={setExtra} />
+
+            <QuarterStrip filters={filters} fyCode={fyCode} onSelect={(quarter) => setExtra({ ...extra, quarter })} />
 
             {/* Where things stand */}
             <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
@@ -256,7 +259,7 @@ const Dashboard: React.FC = () => {
 
             {/* The money, and where work sits */}
             <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
-                <SpendTrendPanel filters={filters} summary={summary} fyCode={fyCode} className="xl:col-span-5" />
+                <SpendTrendPanel filters={filters} summary={summary} fyCode={`${extra.quarter ? `Q${extra.quarter} ` : ''}${fyCode ?? ''}`} className="xl:col-span-5" />
                 <section className="rounded-lg bg-white shadow-sm xl:col-span-7">
                     <div className="border-b border-gray-100 px-5 py-3">
                         <h2 className="text-base font-semibold text-gray-900">Process phases</h2>
@@ -296,7 +299,7 @@ const Dashboard: React.FC = () => {
                 <DonutCard title="Acquisition method" subtitle="How items are being bought" slices={withCategoricalColors(breakdowns?.method, lookupLink('acquisition_method_id', 'no_method'))} centerLabel="Procurements" isLoading={breakdownLoading} error={breakdownError} />
                 <DonutCard title="Contract status" subtitle="Contracts awarded this year" slices={withStatusColors(breakdowns?.contract_status, (row) => drillTo('/contracts', context, { status: row.name }))} centerLabel="Contracts" isLoading={breakdownLoading} error={breakdownError} />
                 <DonutCard title="Invoice status" subtitle="Invoices against this year's contracts" slices={withStatusColors(breakdowns?.invoice_status, (row) => drillTo('/invoices', context, { status: row.name }))} centerLabel="Invoices" isLoading={breakdownLoading} error={breakdownError} />
-                <DonutCard title="Task status" subtitle="Follow-up tasks" slices={withStatusColors(breakdowns?.task_status, (row) => `/tasks?status=${encodeURIComponent(row.name)}${extra.ownerId ? `&owner_id=${extra.ownerId}` : ''}`)} centerLabel="Tasks" isLoading={breakdownLoading} error={breakdownError} />
+                <DonutCard title="Task status" subtitle="Follow-up tasks" slices={withStatusColors(breakdowns?.task_status, (row) => drillTo('/tasks', { fy_id: context.fy_id, owner_id: context.owner_id, quarter: context.quarter }, { status: row.name }))} centerLabel="Tasks" isLoading={breakdownLoading} error={breakdownError} />
             </ChartSection>
 
             <ChartSection title="Money in detail" className="grid grid-cols-1 gap-6 xl:grid-cols-2">

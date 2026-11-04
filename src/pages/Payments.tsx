@@ -7,6 +7,7 @@ import { useSelectedFy } from '../store/hooks'
 import { formatDate, formatMoney } from '../utils/format'
 import ActiveFilters from '../components/common/ActiveFilters'
 import PageHeader from '../components/common/PageHeader'
+import QuarterSelect from '../components/common/QuarterSelect'
 import Pagination from '../components/common/Pagination'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 
@@ -21,6 +22,7 @@ const Payments: React.FC = () => {
 
     const { data, isLoading, isFetching, error, refetch } = invoiceApi.useGetPaymentsQuery({
         fy_id: filters.getNumber('fy_id') ?? fyId,
+        quarter: filters.getNumber('quarter'),
         category_id: filters.getNumber('category_id'),
         owner_id: filters.getNumber('owner_id'),
         paid_from: filters.getString('paid_from'),
@@ -35,6 +37,7 @@ const Payments: React.FC = () => {
             <PageHeader title="Payments" subtitle="Actual expenditure - record payments from an approved invoice" />
 
             <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-white p-3 shadow-sm">
+                <QuarterSelect value={filters.getNumber('quarter')} onChange={(quarter) => filters.setFilters({ quarter })} />
                 <label className="flex items-center gap-2 text-sm text-gray-600">
                     From <input type="date" className="input input-sm border-gray-300" value={filters.getString('paid_from') ?? ''}
                         onChange={(e) => filters.setFilters({ paid_from: e.target.value })} />

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useSelectedFy } from '../store/hooks'
 import type { DashboardFilters } from '../types/Types'
 import PageHeader from '../components/common/PageHeader'
-import DashboardFilterBar from '../components/common/DashboardFilterBar'
+import DashboardFilterBar, { type DashboardExtraFilters } from '../components/common/DashboardFilterBar'
 import StageDurationChart from '../components/charts/StageDurationChart'
 import OfficerWorkloadChart from '../components/charts/OfficerWorkloadChart'
 import YearComparisonChart from '../components/charts/YearComparisonChart'
@@ -14,13 +14,13 @@ import YearComparisonChart from '../components/charts/YearComparisonChart'
  */
 const Reports: React.FC = () => {
     const fyId = useSelectedFy()
-    const [extra, setExtra] = useState<{ categoryId?: number; ownerId?: number }>({})
-    const filters: DashboardFilters = { fy_id: fyId, category_id: extra.categoryId, owner_id: extra.ownerId }
+    const [extra, setExtra] = useState<DashboardExtraFilters>({})
+    const filters: DashboardFilters = { fy_id: fyId, category_id: extra.categoryId, owner_id: extra.ownerId, quarter: extra.quarter }
 
     return (
         <>
             <PageHeader title="Reports" subtitle="Bottlenecks, workload and year-on-year performance" />
-            <DashboardFilterBar categoryId={extra.categoryId} ownerId={extra.ownerId} onChange={setExtra} />
+            <DashboardFilterBar {...extra} onChange={setExtra} />
 
             <div className="grid grid-cols-1 gap-6">
                 <StageDurationChart filters={filters} />
