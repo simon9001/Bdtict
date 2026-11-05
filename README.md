@@ -16,6 +16,17 @@ pnpm lint
 
 To point at another API, set `VITE_API_URL` in `.env`; see `.env.example`.
 
+## Deploy
+
+```bash
+# .env.production: the API address is built into the app, so rebuild after changing it
+VITE_API_URL=https://ict-tracker.kenha.co.ke/api/
+
+pnpm install && pnpm build   # serves from dist/
+```
+
+Serve `dist/` over HTTPS from IIS or nginx, and send unknown paths to `index.html` so a refresh on a page such as `/tracker/consultancy` works. Add the site's address to `CORS_ORIGIN` in the backend.
+
 ## Folder structure
 
 ```

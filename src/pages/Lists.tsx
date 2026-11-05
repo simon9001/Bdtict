@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, X } from 'lucide-react'
+import { Pencil, Plus, X } from 'lucide-react'
 import { settingsApi } from '../features/api/SettingsApi'
 import { useReferenceData } from '../hooks/useReferenceData'
 import { useCurrentUser } from '../store/hooks'
@@ -8,16 +8,16 @@ import type { Lookup, LookupType } from '../types/Types'
 import { confirmAction } from '../utils/confirm'
 import { getErrorMessage } from '../utils/errors'
 import { canCreate, isSa } from '../utils/permissions'
-import EditableCell from '../components/common/EditableCell'
+import Modal from '../components/common/Modal'
 import PageHeader from '../components/common/PageHeader'
-import { PrimaryButton } from '../components/common/Buttons'
+import { IconButton, PrimaryButton } from '../components/common/Buttons'
 import { LoadingState } from '../components/common/States'
-import { inputClass } from '../components/common/FormField'
+import { FormActions, FormField, inputClass } from '../components/common/FormField'
 
 /**
  * The workbook's Lists sheet: every dropdown list, one column each.
- * Category, Priority, Acquisition Method and SCM Officers can be changed here by
- * anyone who works on the tracker. Owners are the staff accounts, and the other
+ * Category, Priority, Acquisition Method and SCM Officers can be changed here, in
+ * a card, by anyone who works on the tracker. Owners are the staff accounts, and the other
  * lists are the fixed choices the system's steps and statuses are built on.
  */
 
@@ -40,6 +40,8 @@ const Lists: React.FC = () => {
     const [updateLookup] = settingsApi.useUpdateLookupMutation()
     const [newType, setNewType] = useState<LookupType>('category')
     const [newValue, setNewValue] = useState('')
+    const [editing, setEditing] = useState<{ lookup: Lookup; list: string; value: string } | null>(null)
+    const [saving, setSaving] = useState(false)
     const canEdit = canCreate(user) || isSa(user)
 
     const lookupsOf: Record<string, Lookup[]> = {
@@ -80,6 +82,21 @@ const Lists: React.FC = () => {
         }
     }
 
+    const saveEdit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editing || !editing.value.trim()) return
+        setSaving(true)
+        try {
+            await updateLookup({ lookup_id: editing.lookup.lookup_id, value: editing.value.trim() }).unwrap()
+            toast.success('Saved')
+            setEditing(null)
+        } catch (err) {
+            toast.error(getErrorMessage(err))
+        } finally {
+            setSaving(false)
+        }
+    }
+
     const remove = async (lookup: Lookup) => {
         if (!(await confirmAction('Remove from this list?', `"${lookup.value}" will no longer be offered. Records already using it keep it.`))) return
         try {
@@ -103,7 +120,7 @@ const Lists: React.FC = () => {
                     <input className={`${inputClass} sm:w-64`} aria-label="New value" placeholder="New value" value={newValue} onChange={(e) => setNewValue(e.target.value)} />
                     <PrimaryButton type="submit" icon={<Plus size={16} />} disabled={adding || !newValue.trim()}>Add</PrimaryButton>
                     <p className="w-full text-xs text-gray-500">
-                        Click a value in Category, Priority, Acquisition Method or SCM Officers to rename it. Owners are managed under Users by the system administrator. The other columns are fixed because the system's steps and statuses depend on them.
+                        Use the pencil beside a value in Category, Priority, Acquisition Method or SCM Officers to change it. Owners are managed under Users by the system administrator. The other columns are fixed because the system's steps and statuses depend on them.
                     </p>
                 </form>
             )}
@@ -124,10 +141,10 @@ const Lists: React.FC = () => {
                                                 <td key={column.header} className="tabular whitespace-nowrap text-xs">
                                                     {lookup ? (
                                                         <div className="group flex items-center gap-1">
-                                                            <div className="min-w-0 flex-1">
-                                                                <EditableCell label={`${column.header} value`} value={lookup.value} canEdit={canEdit}
-                                                                    onSave={(value) => (value ? updateLookup({ lookup_id: lookup.lookup_id, value }).unwrap() : Promise.reject(new Error('A value cannot be blank')))} />
-                                                            </div>
+                                                            <span className="min-w-0 flex-1">{lookup.value}</span>
+                                                            {canEdit && (
+                                                                <IconButton label={`Edit ${lookup.value}`} className="shrink-0" onClick={() => setEditing({ lookup, list: column.header, value: lookup.value })}><Pencil size={12} /></IconButton>
+                                                            )}
                                                             {canEdit && (
                                                                 <button type="button" aria-label={`Remove ${lookup.value}`} title="Remove from this list" onClick={() => remove(lookup)}
                                                                     className="shrink-0 rounded p-0.5 text-gray-300 hover:bg-red-50 hover:text-red-700 focus:text-red-700">
@@ -146,6 +163,15 @@ const Lists: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <Modal open={!!editing} onClose={() => setEditing(null)} title={`Edit ${editing?.list ?? ''} value`} size="md">
+                <form onSubmit={saveEdit} className="space-y-4">
+                    <FormField label={editing?.list ?? 'Value'} required>
+                        <input autoFocus className={inputClass} value={editing?.value ?? ''} onChange={(e) => editing && setEditing({ ...editing, value: e.target.value })} />
+                    </FormField>
+                    <FormActions onCancel={() => setEditing(null)} isSaving={saving} submitLabel="Save changes" />
+                </form>
+            </Modal>
         </>
     )
 }

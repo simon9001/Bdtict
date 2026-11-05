@@ -544,6 +544,7 @@ export interface MemoQuery extends PageQuery {
 // ================================== Tracker =================================
 
 export interface TrackerStep {
+    event_id: number;
     status: StageEventStatus;
     event_date: string;
 }
@@ -570,6 +571,7 @@ export interface TrackerProcurement {
     tender_days: number | null;
     is_escalated: boolean;
     escalated_to: string | null;
+    escalation_note: string | null;
     progress_percent: number | null;
     notes: string | null;
     steps: Record<string, TrackerStep>;
@@ -598,8 +600,8 @@ export interface TrackerData {
     financial_years: { fy_id: number; code: string; start_date: string }[];
     budget_lines: TrackerBudgetLine[];
     procurements: TrackerProcurement[];
-    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'owner_id' | 'owner_name' | 'category_id' | 'category' | 'priority_id' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes'>[];
-    tasks: { task_id: number; title: string; section_id: number | null; owner_id: number; owner_name: string; priority_id: number | null; priority: string | null; due_date: string | null; status: TaskStatus; created_at: string }[];
+    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'fy_id' | 'owner_id' | 'owner_name' | 'category_id' | 'category' | 'priority_id' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes'>[];
+    tasks: { task_id: number; title: string; description: string | null; procurement_id: number | null; section_id: number | null; owner_id: number; owner_name: string; priority_id: number | null; priority: string | null; due_date: string | null; status: TaskStatus; created_at: string }[];
 }
 
 export interface TaskQuery extends PageQuery {
