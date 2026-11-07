@@ -92,7 +92,7 @@ const LookupGroup: React.FC<{ type: LookupType; title: string; items: Lookup[] }
             <ul className="divide-y divide-gray-100">
                 {items.map((item) => (
                     <li key={item.lookup_id} className="flex items-center justify-between px-5 py-2">
-                        <span className={item.is_active ? 'text-gray-900' : 'text-gray-400 line-through'}>{item.value}</span>
+                        <span className={item.is_active ? 'text-gray-900' : 'text-gray-500 line-through'}>{item.value}</span>
                         <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-500">
                             {item.is_active ? 'In use' : 'Hidden'}
                             <input type="checkbox" className="toggle toggle-sm toggle-success" checked={item.is_active} onChange={() => toggle(item)}

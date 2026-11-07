@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { toast } from 'sonner'
 import Modal from '../common/Modal'
+import EscalationFields from '../common/EscalationFields'
 import { FormActions, FormField, inputClass } from '../common/FormField'
 import { optionalId, optionalText } from '../../utils/form'
 import { memoApi } from '../../features/api/MemoApi'
@@ -18,6 +19,9 @@ interface MemoFormModalProps {
     memo?: Memo // edit mode
 }
 
+// Escalated is "Yes" or "No" in the form, as on the sheet
+type MemoCardValues = Omit<MemoFormValues, 'is_escalated'> & { is_escalated: string }
+
 // Create or edit a memo to the DG
 const MemoFormModal: React.FC<MemoFormModalProps> = ({ open, onClose, memo }) => {
     const user = useCurrentUser()
@@ -27,7 +31,7 @@ const MemoFormModal: React.FC<MemoFormModalProps> = ({ open, onClose, memo }) =>
 
     const [createMemo, { isLoading: creating }] = memoApi.useCreateMemoMutation()
     const [updateMemo, { isLoading: updating }] = memoApi.useUpdateMemoMutation()
-    const { register, handleSubmit, reset, getValues, formState: { errors } } = useForm<MemoFormValues>()
+    const { register, handleSubmit, reset, getValues, watch, formState: { errors } } = useForm<MemoCardValues>()
 
     useEffect(() => {
         if (!open) return
@@ -43,11 +47,15 @@ const MemoFormModal: React.FC<MemoFormModalProps> = ({ open, onClose, memo }) =>
             dg_status: memo.dg_status,
             status: memo.status,
             notes: memo.notes,
-        } : { fy_id: selectedFy ?? ref.currentYear?.fy_id, owner_id: user?.user_id, status: 'Not Started' })
+            is_escalated: memo.is_escalated ? 'Yes' : 'No',
+            escalated_to: memo.escalated_to,
+        } : { fy_id: selectedFy ?? ref.currentYear?.fy_id, owner_id: user?.user_id, status: 'Not Started', is_escalated: 'No', escalated_to: null })
     }, [open, memo, selectedFy, ref.currentYear, user, reset])
 
-    const onSubmit: SubmitHandler<MemoFormValues> = async (values) => {
-        const body = isAdmin(user) ? values : { ...values, owner_id: undefined }
+    const onSubmit: SubmitHandler<MemoCardValues> = async (values) => {
+        const escalated = values.is_escalated === 'Yes'
+        const fields = { ...values, is_escalated: escalated, escalated_to: escalated ? values.escalated_to : null }
+        const body = isAdmin(user) ? fields : { ...fields, owner_id: undefined }
         try {
             if (isEdit) await updateMemo({ memo_id: memo.memo_id, ...body }).unwrap()
             else await createMemo(body).unwrap()
@@ -117,6 +125,7 @@ const MemoFormModal: React.FC<MemoFormModalProps> = ({ open, onClose, memo }) =>
                             </select>
                         </FormField>
                     )}
+                    <EscalationFields flag={register('is_escalated')} to={register('escalated_to', { setValueAs: optionalText })} escalated={watch('is_escalated') === 'Yes'} current={memo?.escalated_to} />
                 </div>
 
                 <FormField label="Notes">

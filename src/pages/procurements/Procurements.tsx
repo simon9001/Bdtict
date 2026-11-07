@@ -179,10 +179,10 @@ const Procurements: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="hidden md:table-cell whitespace-nowrap text-sm">{p.owner_name}</td>
-                                        <td className="hidden md:table-cell text-sm">{p.current_stage_name ?? <span className="text-gray-400">Not started</span>}</td>
+                                        <td className="hidden md:table-cell text-sm">{p.current_stage_name ?? <span className="text-gray-500">Not started</span>}</td>
                                         <td className="hidden lg:table-cell tabular text-right text-sm">
                                             {p.days_in_stage ?? '—'}
-                                            {p.sla_days != null && <span className="text-gray-400"> / {p.sla_days}</span>}
+                                            {p.sla_days != null && <span className="text-gray-500"> / {p.sla_days}</span>}
                                         </td>
                                         <td><StatusBadge status={p.status} /></td>
                                         <td className="hidden sm:table-cell"><ProgressBar value={p.progress_percent} /></td>

@@ -122,10 +122,11 @@ export interface Allocation {
     fy_id: number;
     fy_code?: string;
     planned_amount: number;
-    q1_amount: number;
-    q2_amount: number;
-    q3_amount: number;
-    q4_amount: number;
+    // Actually paid in each quarter, from the payments recorded
+    q1_actual?: number;
+    q2_actual?: number;
+    q3_actual?: number;
+    q4_actual?: number;
 }
 
 export interface BudgetLine {
@@ -149,10 +150,6 @@ export interface BudgetLine {
     updated_at: string;
     // present when the list is filtered by fy_id
     fy_planned_amount?: number | null;
-    fy_q1_amount?: number | null;
-    fy_q2_amount?: number | null;
-    fy_q3_amount?: number | null;
-    fy_q4_amount?: number | null;
 }
 
 export interface BudgetLineDetail extends BudgetLine {
@@ -463,6 +460,9 @@ export interface PaymentListResponse extends PaginatedResponse<Payment> {
 export const TASK_STATUSES = ['Open', 'In Progress', 'Done', 'Cancelled'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
+// Tasks are shown in the words of the workbook's status list
+export const taskStatusLabel = (status: string) => (status === 'Open' ? 'Not Started' : status === 'Done' ? 'Completed' : status);
+
 export interface Task {
     task_id: number;
     title: string;
@@ -475,6 +475,10 @@ export interface Task {
     section: string | null;
     priority_id: number | null;
     priority: string | null;
+    category_id: number | null;
+    category: string | null;
+    is_escalated: boolean;
+    escalated_to: string | null;
     due_date: string | null;
     status: TaskStatus;
     is_overdue: boolean;
@@ -489,8 +493,11 @@ export interface TaskFormValues {
     procurement_id?: number | null;
     section_id?: number | null;
     priority_id?: number | null;
+    category_id?: number | null;
     due_date?: string | null;
     status: TaskStatus;
+    is_escalated?: boolean;
+    escalated_to?: string | null;
 }
 
 // =================================== Memos ==================================
@@ -515,6 +522,8 @@ export interface Memo {
     dg_status: DgStatus | null;
     status: ProcurementStatus;
     notes: string | null;
+    is_escalated: boolean;
+    escalated_to: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -531,6 +540,8 @@ export interface MemoFormValues {
     dg_status?: DgStatus | null;
     status: ProcurementStatus;
     notes?: string | null;
+    is_escalated?: boolean;
+    escalated_to?: string | null;
 }
 
 export interface MemoQuery extends PageQuery {
@@ -547,12 +558,14 @@ export interface TrackerStep {
     event_id: number;
     status: StageEventStatus;
     event_date: string;
+    date_known: boolean; // false: the sheet ticked the step without a date
 }
 
 export interface TrackerProcurement {
     procurement_id: number;
     reference: string | null;
     title: string;
+    fy_id: number;
     section_id: number | null;
     budget_line_id: number | null;
     owner_id: number;
@@ -591,7 +604,8 @@ export interface TrackerBudgetLine {
     total_amount: number;
     owner_id: number;
     owner_name: string;
-    allocations: { fy_id: number; planned_amount: number; q1_amount: number; q2_amount: number; q3_amount: number; q4_amount: number }[];
+    allocations: { fy_id: number; planned_amount: number }[];
+    actuals: { fy_id: number; q1_actual: number; q2_actual: number; q3_actual: number; q4_actual: number }[]; // the sheet's Expenditure Q1-Q4, from payments
 }
 
 export interface TrackerData {
@@ -600,8 +614,8 @@ export interface TrackerData {
     financial_years: { fy_id: number; code: string; start_date: string }[];
     budget_lines: TrackerBudgetLine[];
     procurements: TrackerProcurement[];
-    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'fy_id' | 'owner_id' | 'owner_name' | 'category_id' | 'category' | 'priority_id' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes'>[];
-    tasks: { task_id: number; title: string; description: string | null; procurement_id: number | null; section_id: number | null; owner_id: number; owner_name: string; priority_id: number | null; priority: string | null; due_date: string | null; status: TaskStatus; created_at: string }[];
+    memos: Pick<Memo, 'memo_id' | 'reference' | 'title' | 'fy_id' | 'owner_id' | 'owner_name' | 'category_id' | 'category' | 'priority_id' | 'priority' | 'delivered_date' | 'approved_date' | 'dg_status' | 'status' | 'notes' | 'is_escalated' | 'escalated_to'>[];
+    tasks: { task_id: number; title: string; description: string | null; procurement_id: number | null; section_id: number | null; owner_id: number; owner_name: string; priority_id: number | null; priority: string | null; category_id: number | null; category: string | null; due_date: string | null; status: TaskStatus; is_escalated: boolean; escalated_to: string | null; created_at: string }[];
 }
 
 export interface TaskQuery extends PageQuery {
@@ -706,13 +720,16 @@ export interface CategoryBudget {
 
 export interface QuarterSpend {
     quarter: string;
-    year_planned: number; // the whole year's plan, to show what is not split into quarters
+    year_planned: number; // the whole year's budget
     from_date: string;
     to_date: string;
-    planned: number;
     actual: number;
-    cumulative_planned: number;
     cumulative_actual: number;
+}
+
+export interface BalanceChecks {
+    lines_checked: number;
+    issues: { budget_line_id: number; code: string | null; description: string; problem: string }[];
 }
 
 export interface PipelineStage {

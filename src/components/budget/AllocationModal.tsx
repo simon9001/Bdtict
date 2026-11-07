@@ -19,17 +19,10 @@ interface AllocationModalProps {
     usedYearIds: number[]       // years that already have an allocation
 }
 
-const QUARTERS = [
-    { key: 'q1_amount', label: 'Q1 (Jul–Sep)' },
-    { key: 'q2_amount', label: 'Q2 (Oct–Dec)' },
-    { key: 'q3_amount', label: 'Q3 (Jan–Mar)' },
-    { key: 'q4_amount', label: 'Q4 (Apr–Jun)' },
-] as const
-
 /**
- * Planned spend of a budget line for one financial year, optionally split by
- * quarter. Quarters may not add up to more than the year; the years together
- * may not exceed the line total (the API checks both too).
+ * Planned spend of a budget line for one financial year. The years together may
+ * not exceed the line total, and a year's plan may not drop below what has been
+ * paid in it (the API checks both).
  */
 const AllocationModal: React.FC<AllocationModalProps> = (props) => (
     <Modal
@@ -54,18 +47,16 @@ const AllocationForm: React.FC<AllocationModalProps> = ({
     const yearChoices = financialYears.filter((fy) => isEdit || !usedYearIds.includes(fy.fy_id))
     const defaultYear = yearChoices.find((fy) => fy.fy_id === currentYear?.fy_id) ?? yearChoices[0]
 
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<Allocation>({
+    const { register, handleSubmit, formState: { errors } } = useForm<Allocation>({
         defaultValues: allocation ?? {
             fy_id: defaultYear?.fy_id,
             planned_amount: Math.max(0, available),
-            q1_amount: 0, q2_amount: 0, q3_amount: 0, q4_amount: 0,
         },
     })
-    const quarterSum = QUARTERS.reduce((sum, q) => sum + (Number(watch(q.key)) || 0), 0)
 
     const onSubmit: SubmitHandler<Allocation> = async (values) => {
         try {
-            await setAllocation({ budget_line_id: budgetLineId, ...values }).unwrap()
+            await setAllocation({ budget_line_id: budgetLineId, fy_id: values.fy_id, planned_amount: values.planned_amount }).unwrap()
             toast.success('Planned spend saved')
             onClose()
         } catch (error) {
@@ -96,21 +87,6 @@ const AllocationForm: React.FC<AllocationModalProps> = ({
                                 max: { value: available, message: `Only ${formatMoney(available)} left on this line` },
                             })} />
                     </FormField>
-                </div>
-
-                <div>
-                    <p className="mb-2 text-sm font-medium text-gray-700">Quarterly plan <span className="font-normal text-gray-500">(optional)</span></p>
-                    <div className="grid grid-cols-2 gap-4">
-                        {QUARTERS.map((q) => (
-                            <FormField key={q.key} label={q.label} error={errors[q.key]?.message}>
-                                <input type="number" step="0.01" min="0" className={inputClass}
-                                    {...register(q.key, { valueAsNumber: true, min: { value: 0, message: 'Cannot be negative' } })} />
-                            </FormField>
-                        ))}
-                    </div>
-                    <p className={`mt-2 text-xs ${quarterSum > (Number(watch('planned_amount')) || 0) ? 'text-red-600' : 'text-gray-500'}`}>
-                        Quarters add up to {formatMoney(quarterSum)}
-                    </p>
                 </div>
 
                 <FormActions onCancel={onClose} isSaving={isLoading} submitLabel="Save" />

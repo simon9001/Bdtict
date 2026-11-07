@@ -15,6 +15,7 @@ import StatusBadge from '../components/common/StatusBadge'
 import { EscalatedBadge, OverdueBadge } from '../components/common/FlagBadges'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import DashboardFilterBar, { type DashboardExtraFilters } from '../components/common/DashboardFilterBar'
+import BalanceCheck from '../components/common/BalanceCheck'
 import QuarterStrip from '../components/charts/QuarterStrip'
 import BudgetByCategoryChart from '../components/charts/BudgetByCategoryChart'
 import ChartCard, { type TableColumn } from '../components/charts/ChartCard'
@@ -191,6 +192,8 @@ const Dashboard: React.FC = () => {
 
             <QuarterStrip filters={filters} fyCode={fyCode} onSelect={(quarter) => setExtra({ ...extra, quarter })} />
 
+            <BalanceCheck filters={filters} />
+
             {/* Where things stand */}
             <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
                 <div className="grid grid-cols-2 content-start gap-4 xl:col-span-4">
@@ -259,7 +262,7 @@ const Dashboard: React.FC = () => {
 
             {/* The money, and where work sits */}
             <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
-                <SpendTrendPanel filters={filters} summary={summary} fyCode={`${extra.quarter ? `Q${extra.quarter} ` : ''}${fyCode ?? ''}`} className="xl:col-span-5" />
+                <SpendTrendPanel filters={filters} summary={summary} fyCode={fyCode} className="xl:col-span-5" />
                 <section className="rounded-lg bg-white shadow-sm xl:col-span-7">
                     <div className="border-b border-gray-100 px-5 py-3">
                         <h2 className="text-base font-semibold text-gray-900">Process phases</h2>

@@ -4,13 +4,15 @@ import { Pencil, Plus } from 'lucide-react'
 import { trackerApi } from '../features/api/TrackerApi'
 import { useReferenceData } from '../hooks/useReferenceData'
 import { useUrlFilters } from '../hooks/useUrlFilters'
-import { useCurrentUser, useSelectedFy } from '../store/hooks'
-import type { Memo, Task, TrackerBudgetLine, TrackerData, TrackerProcurement } from '../types/Types'
+import { setFinancialYear } from '../features/slice/FilterSlice'
+import { useAppDispatch, useCurrentUser, useSelectedFy } from '../store/hooks'
+import { taskStatusLabel, type Memo, type Task, type TrackerBudgetLine, type TrackerData, type TrackerProcurement } from '../types/Types'
 import { formatDate, formatMoney } from '../utils/format'
 import { canCreate, canEditOwned, isAdmin } from '../utils/permissions'
 import { QUARTERS, quarterRange } from '../utils/quarters'
 import { MEMO_STAGES, STEP_HEADERS } from '../utils/sheetColumns'
 import ActiveFilters from '../components/common/ActiveFilters'
+import BalanceCheck from '../components/common/BalanceCheck'
 import { IconButton } from '../components/common/Buttons'
 import PageHeader from '../components/common/PageHeader'
 import QuarterSelect from '../components/common/QuarterSelect'
@@ -31,8 +33,8 @@ import SheetRowCard from '../components/tracker/SheetRowCard'
 
 // The URL says which sheet. A section belongs to a sheet by the first letter of its id.
 const SHEETS = [
-    { slug: 'all-list', sectionPrefix: 'T', title: 'Procurement of Assets: All list' },
-    { slug: 'assets-infra-sw', sectionPrefix: 'A', title: 'Procurement of Assets: Infra, Sw' },
+    { slug: 'all-list', sectionPrefix: 'T', title: 'Procurement of Assets_All list' },
+    { slug: 'assets-infra-sw', sectionPrefix: 'A', title: 'Procurement of Assets_Infra, Sw' },
     { slug: 'maintenance-support', sectionPrefix: 'M', title: 'Maintenance & Support' },
     { slug: 'consultancy', sectionPrefix: 'C', title: 'Consultancy' },
     { slug: 'subscription-support', sectionPrefix: 'S', title: 'Subscription & Support' },
@@ -44,7 +46,7 @@ const METHOD_AFTER = 'SCM_STARTED'
 const DAYS_AFTER = 'TENDER_FLOATED'
 
 const TRAILING_HEADERS = ['Escalated', 'Escalated To', '% Complete', 'Notes']
-const QUARTER_FIELDS = ['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as const
+const QUARTER_FIELDS = ['q1_actual', 'q2_actual', 'q3_actual', 'q4_actual'] as const
 
 type Stage = TrackerData['stages'][number]
 
@@ -58,11 +60,11 @@ const STEP_TONES: Record<string, string> = {
     Rejected: 'text-red-800',
 }
 
-const Empty = () => <span className="text-gray-300">—</span>
+const Empty = () => <span className="text-gray-400">—</span>
 
-const cell = 'whitespace-nowrap text-xs'
-const titleCell = 'sticky left-0 z-10 min-w-64 max-w-80 bg-white text-xs font-medium text-gray-900'
-const titleHeader = 'sticky left-0 z-10 whitespace-nowrap bg-white'
+const cell = 'whitespace-nowrap text-sm'
+const titleCell = 'sticky left-0 z-10 min-w-80 max-w-md bg-white text-sm font-medium text-gray-900'
+const titleHeader = 'sticky left-0 z-20 whitespace-nowrap !bg-gray-100'
 
 const Text: React.FC<{ value?: string | number | null }> = ({ value }) =>
     value === null || value === undefined || value === '' ? <Empty /> : <>{value}</>
@@ -115,14 +117,21 @@ const StepCell: React.FC<{ stage: Stage; item?: TrackerProcurement }> = ({ stage
             {step ? (
                 <>
                     <p className={`font-medium ${STEP_TONES[step.status] ?? 'text-gray-700'}`}>{step.status}</p>
-                    <p className="tabular text-gray-500">{formatDate(step.event_date)}</p>
+                    <p className="tabular text-gray-500">{step.date_known ? formatDate(step.event_date) : 'Date not recorded'}</p>
                 </>
             ) : <Empty />}
         </td>
     )
 }
 
-const ProcessCells: React.FC<{ sheetStages: Stage[]; extraStages: Stage[]; item?: TrackerProcurement }> = ({ sheetStages, extraStages, item }) => (
+// The trailing columns of a row: a procurement's own, or a memo's or task's
+interface RowFlags {
+    is_escalated: boolean
+    escalated_to: string | null
+    notes: string | null
+}
+
+const ProcessCells: React.FC<{ sheetStages: Stage[]; extraStages: Stage[]; item?: TrackerProcurement; flags?: RowFlags }> = ({ sheetStages, extraStages, item, flags = item }) => (
     <>
         {sheetStages.map((stage) => (
             <React.Fragment key={stage.code}>
@@ -132,21 +141,21 @@ const ProcessCells: React.FC<{ sheetStages: Stage[]; extraStages: Stage[]; item?
                 {stage.code === DAYS_AFTER && <td className={`${cell} tabular`}><Text value={item?.tender_days} /></td>}
             </React.Fragment>
         ))}
-        <td className={cell}>{item ? (item.is_escalated ? <span className="font-medium text-orange-700">Yes</span> : 'No') : <Empty />}</td>
-        <td className={cell}><Text value={item?.escalated_to} /></td>
+        <td className={cell}>{flags ? (flags.is_escalated ? <span className="font-medium text-orange-700">Yes</span> : 'No') : <Empty />}</td>
+        <td className={cell}><Text value={flags?.escalated_to} /></td>
         <td className={`${cell} tabular text-right`}>{item ? `${item.progress_percent ?? 0}%` : <Empty />}</td>
-        <td className="min-w-48 text-xs"><Text value={item?.notes} /></td>
+        <td className="min-w-48 text-sm"><Text value={flags?.notes} /></td>
         {extraStages.map((stage) => <StepCell key={stage.code} stage={stage} item={item} />)}
     </>
 )
 
 // Shaded header row of a section, like the sheet's, with a button to add a row to it
 const SectionRow: React.FC<{ name: string; columns: number; count: number; onAdd?: () => void }> = ({ name, columns, count, onAdd }) => (
-    <tr className="bg-green-50">
-        <td colSpan={columns} className="text-xs font-semibold text-green-900">
+    <tr className="border-l-4 border-l-green-700 bg-green-100">
+        <td colSpan={columns} className="text-sm font-semibold text-green-950">
             <span className="sticky left-3 inline-flex items-center gap-2">
                 {name}
-                <span className="font-normal text-gray-600">{count === 0 ? 'Nothing recorded yet' : `${count} item${count === 1 ? '' : 's'}`}</span>
+                <span className="font-normal text-green-900">{count === 0 ? 'Nothing recorded yet' : `${count} item${count === 1 ? '' : 's'}`}</span>
                 {onAdd && (
                     <button type="button" onClick={onAdd} aria-label={`Add to ${name}`} className="btn btn-xs border-green-700 bg-white text-green-900 hover:bg-green-100">
                         <Plus size={12} aria-hidden />Add
@@ -180,9 +189,6 @@ interface ActivityFilter {
     range?: { from: string; to: string } // the chosen quarter
 }
 
-// The dashboard counts an open task as Not Started and a done one as Completed
-const taskActivityStatus = (status: string) => (status === 'Open' ? 'Not Started' : status === 'Done' ? 'Completed' : status)
-
 // What a new row in each All list section is
 const newRowKind = (sectionName: string): 'memo' | 'task' | 'procurement' => {
     if (sectionName.startsWith('T-001')) return 'memo'
@@ -199,7 +205,7 @@ interface SheetProps {
 const AllListSheet: React.FC<SheetProps & { filter: ActivityFilter }> = ({ data, canEdit, canAdd, openCard, filter }) => {
     const isFiltered = Object.values(filter).some(Boolean)
     const today = new Date().toISOString().slice(0, 10)
-    const matches = (row: { status: string; priority: string | null; owner_name: string; category?: string }) =>
+    const matches = (row: { status: string; priority: string | null; owner_name: string; category?: string | null }) =>
         (!filter.status || row.status === filter.status)
         && (!filter.priority || row.priority === filter.priority)
         && (!filter.owner || row.owner_name === filter.owner)
@@ -240,13 +246,13 @@ const AllListSheet: React.FC<SheetProps & { filter: ActivityFilter }> = ({ data,
                     const inGroup = (id: number | null) => (group.id === null ? id === null || !sectionIds.has(id) : id === group.id)
                     const memos = (group.id === memoSection ? data.memos : []).filter((m) => matches(m) && inRange(m.delivered_date)
                         && (!filter.overdue || (!!m.approved_date && m.approved_date.slice(0, 10) < today && m.status !== 'Completed'))
-                        && !filter.escalated)
+                        && (!filter.escalated || m.is_escalated))
                     const items = standalone.filter((p) => inGroup(p.section_id) && matches(p) && !filter.overdue && (!filter.escalated || p.is_escalated)
-                        && (!filter.range || Object.values(p.steps).some((step) => inRange(step.event_date))))
+                        && (!filter.range || Object.values(p.steps).some((step) => step.date_known && inRange(step.event_date))))
                     const tasks = data.tasks.filter((t) => inGroup(t.section_id)
-                        && matches({ ...t, status: taskActivityStatus(t.status) })
+                        && matches({ ...t, status: taskStatusLabel(t.status) })
                         && inRange(t.due_date ?? t.created_at)
-                        && !filter.category && !filter.overdue && !filter.escalated)
+                        && !filter.overdue && (!filter.escalated || t.is_escalated))
                     const count = memos.length + items.length + tasks.length
                     // Empty sections stay on the sheet, but not when looking for something specific
                     if ((group.id === null || isFiltered) && count === 0) return null
@@ -254,10 +260,13 @@ const AllListSheet: React.FC<SheetProps & { filter: ActivityFilter }> = ({ data,
                     return (
                         <React.Fragment key={group.name}>
                             <SectionRow name={group.name} columns={columns} count={count} onAdd={canAdd && group.id !== null ? () => addTo(group) : undefined} />
-                            {memos.map((memo) => (
+                            {memos.map((memo) => {
+                                // A memo with no budget line behind it keeps its steps on a procurement with its reference
+                                const linked = data.procurements.find((p) => !p.budget_line_id && !!p.reference && p.reference === memo.reference)
+                                return (
                                 <tr key={`memo-${memo.memo_id}`} className="hover:bg-gray-50">
                                     <td className={`${cell} tabular`}><Text value={memo.reference} /></td>
-                                    <TitleCell title={memo.title} to="/memos" onEdit={canEdit(memo.owner_id) ? () => openCard({ kind: 'memo', memo }) : undefined} />
+                                    <TitleCell title={memo.title} to={linked ? `/procurements/${linked.procurement_id}` : '/memos'} onEdit={canEdit(memo.owner_id) ? () => openCard({ kind: 'memo', memo }) : undefined} />
                                     <td className={cell}>{memo.owner_name}</td>
                                     <td className={cell}>{memo.category}</td>
                                     <td className={cell}><Text value={memo.priority} /></td>
@@ -265,9 +274,10 @@ const AllListSheet: React.FC<SheetProps & { filter: ActivityFilter }> = ({ data,
                                     <td className={cell}><DateText value={memo.approved_date} /></td>
                                     <td className={cell}>{memo.dg_status ? <StatusBadge status={memo.dg_status} /> : <Empty />}</td>
                                     <td className={cell}><StatusBadge status={memo.status} /></td>
-                                    <ProcessCells {...process} />
+                                    <ProcessCells {...process} item={linked} flags={{ is_escalated: memo.is_escalated, escalated_to: memo.escalated_to, notes: memo.notes ?? linked?.notes ?? null }} />
                                 </tr>
-                            ))}
+                                )
+                            })}
                             {items.map((item) => (
                                 <tr key={`procurement-${item.procurement_id}`} className="hover:bg-gray-50">
                                     <td className={`${cell} tabular`}><Text value={item.reference} /></td>
@@ -287,13 +297,13 @@ const AllListSheet: React.FC<SheetProps & { filter: ActivityFilter }> = ({ data,
                                     <td className={cell}><Empty /></td>
                                     <TitleCell title={task.title} to="/tasks?all=true" onEdit={canEdit(task.owner_id) ? () => openCard({ kind: 'task', task }) : undefined} />
                                     <td className={cell}>{task.owner_name}</td>
-                                    <td className={cell}><Empty /></td>
+                                    <td className={cell}><Text value={task.category} /></td>
                                     <td className={cell}><Text value={task.priority} /></td>
                                     <td className={cell}><Empty /></td>
                                     <td className={cell}><Empty /></td>
                                     <td className={cell}><Empty /></td>
-                                    <td className={cell}><StatusBadge status={task.status} /></td>
-                                    <ProcessCells {...process} />
+                                    <td className={cell}><StatusBadge status={taskStatusLabel(task.status)} /></td>
+                                    <ProcessCells {...process} flags={{ is_escalated: task.is_escalated, escalated_to: task.escalated_to, notes: task.description }} />
                                 </tr>
                             ))}
                         </React.Fragment>
@@ -316,9 +326,24 @@ const BudgetSheet: React.FC<SheetProps & { sectionPrefix: string; fyId: number; 
     const columns = 7 + years.length + 5 + processColumnCount(sheetStages, extraStages)
     const money = (value?: number) => (value ? <span className="tabular">{formatMoney(value)}</span> : <Empty />)
 
+    // A line is on the sheet in the years it is planned or being procured
+    const inViewedYear = (line: TrackerBudgetLine) => line.allocations.some((a) => a.fy_id === fyId) || data.procurements.some((p) => p.budget_line_id === line.budget_line_id)
+
+    // With a quarter chosen: the lines with spending in that quarter, as on the Budget Lines page
+    const linesOf = (sectionId: number) => data.budget_lines.filter((l) => {
+        if (l.section_id !== sectionId || !inViewedYear(l)) return false
+        const field = quarter ? QUARTER_FIELDS[quarter - 1] : undefined
+        return !field || (l.actuals.find((a) => a.fy_id === fyId)?.[field] ?? 0) > 0
+    })
+
+    // The sheet's totals, so its columns can be checked at a glance
+    const shown = sections.flatMap((section) => linesOf(section.section_id))
+    const sumOf = (valueOf: (line: TrackerBudgetLine) => number | undefined) => shown.reduce((sum, line) => sum + (valueOf(line) ?? 0), 0)
+
     const row = (line: TrackerBudgetLine) => {
-        const item = data.procurements.find((p) => p.budget_line_id === line.budget_line_id)
-        const thisYear = line.allocations.find((a) => a.fy_id === fyId)
+        const procurementsOfLine = data.procurements.filter((p) => p.budget_line_id === line.budget_line_id)
+        const item = procurementsOfLine.find((p) => p.fy_id === fyId) ?? procurementsOfLine[0]
+        const thisYear = line.actuals.find((a) => a.fy_id === fyId)
         return (
             <tr key={line.budget_line_id} className="hover:bg-gray-50">
                 <td className={`${cell} tabular`}><Text value={line.code} /></td>
@@ -356,12 +381,7 @@ const BudgetSheet: React.FC<SheetProps & { sectionPrefix: string; fyId: number; 
             </thead>
             <tbody>
                 {sections.map((section) => {
-                    // With a quarter chosen: the lines with a plan in that quarter, as on the Budget Lines page
-                    const lines = data.budget_lines.filter((l) => {
-                        if (l.section_id !== section.section_id) return false
-                        const field = quarter ? QUARTER_FIELDS[quarter - 1] : undefined
-                        return !field || (l.allocations.find((a) => a.fy_id === fyId)?.[field] ?? 0) > 0
-                    })
+                    const lines = linesOf(section.section_id)
                     return (
                         <React.Fragment key={section.section_id}>
                             <SectionRow name={section.name} columns={columns} count={lines.length} onAdd={canAdd ? () => openCard({ kind: 'budget', sectionId: section.section_id }) : undefined} />
@@ -370,6 +390,18 @@ const BudgetSheet: React.FC<SheetProps & { sectionPrefix: string; fyId: number; 
                     )
                 })}
             </tbody>
+            <tfoot>
+                <tr className="bg-gray-50 font-semibold text-gray-900">
+                    <td />
+                    <td className="sticky left-0 z-10 bg-gray-50 text-sm">Total</td>
+                    <td colSpan={3} />
+                    <td className={`${cell} text-right`}>{money(sumOf((l) => l.total_amount))}</td>
+                    <td />
+                    {years.map((fy) => <td key={fy.fy_id} className={`${cell} text-right`}>{money(sumOf((l) => l.allocations.find((a) => a.fy_id === fy.fy_id)?.planned_amount))}</td>)}
+                    {QUARTER_FIELDS.map((field) => <td key={field} className={`${cell} text-right`}>{money(sumOf((l) => l.actuals.find((a) => a.fy_id === fyId)?.[field]))}</td>)}
+                    <td colSpan={1 + processColumnCount(sheetStages, extraStages)} />
+                </tr>
+            </tfoot>
         </table>
     )
 }
@@ -381,7 +413,8 @@ const Tracker: React.FC = () => {
     const user = useCurrentUser()
     const fyId = useSelectedFy()
     const filters = useUrlFilters()
-    const { categories, staff } = useReferenceData()
+    const dispatch = useAppDispatch()
+    const { categories, staff, currentYear } = useReferenceData()
     const { data, isLoading, error, refetch } = trackerApi.useGetTrackerQuery({ fy_id: filters.getNumber('fy_id') ?? fyId })
     const [card, setCard] = useState<CardTarget | null>(null)
     const sheet = SHEETS.find((s) => s.slug === slug)
@@ -406,6 +439,15 @@ const Tracker: React.FC = () => {
     }
     const closeCard = () => setCard(null)
 
+    // The year picked at the top is remembered, so an empty All list usually means another year is picked
+    const viewedYear = data?.financial_year
+    const allListEmpty = sheet.sectionPrefix === 'T' && !!data
+        && data.data.memos.length === 0 && data.data.tasks.length === 0 && !data.data.procurements.some((p) => !p.budget_line_id)
+    const showCurrentYear = () => {
+        dispatch(setFinancialYear(null))
+        filters.setFilters({ fy_id: undefined })
+    }
+
     return (
         <>
             <PageHeader title={sheet.title} subtitle={`Financial year ${data?.financial_year.code ?? ''}. Scroll sideways to see every column.`} />
@@ -420,9 +462,22 @@ const Tracker: React.FC = () => {
                 <span className="text-sm font-medium text-gray-600">Filter:</span>
                 <QuarterSelect value={quarter} onChange={(value) => filters.setFilters({ quarter: value })} />
                 <span className="text-xs text-gray-500">
-                    {sheet.sectionPrefix === 'T' ? 'Memos delivered, tasks due and activities with a step recorded in the quarter' : 'Budget lines with a plan entered for the quarter'}
+                    {sheet.sectionPrefix === 'T' ? 'Memos delivered, tasks due and activities with a step recorded in the quarter' : 'Budget lines with payments made in the quarter'}
                 </span>
             </div>
+
+            {allListEmpty && viewedYear && (
+                <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <span>Nothing has been recorded on this sheet for <strong>FY {viewedYear.code}</strong>. The year is chosen at the top of the page and applies to every page.</span>
+                    {currentYear && currentYear.fy_id !== viewedYear.fy_id && (
+                        <button type="button" className="btn btn-sm border-amber-700 bg-white text-amber-900 hover:bg-amber-100" onClick={showCurrentYear}>
+                            Show FY {currentYear.code} (current)
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {sheet.sectionPrefix !== 'T' && data && <BalanceCheck filters={{ fy_id: data.financial_year.fy_id }} />}
 
             {sheet.sectionPrefix === 'T' && Object.values(activityFilter).some(Boolean) && (
                 <>

@@ -12,17 +12,17 @@ export const memoApi = baseApi.injectEndpoints({
 
         createMemo: builder.mutation<ApiResponse<Memo>, MemoFormValues>({
             query: (body) => ({ url: 'memos', method: 'POST', body }),
-            invalidatesTags: ['Memos', 'Dashboard'],
+            invalidatesTags: ['Memos', 'Procurements', 'Dashboard'],
         }),
 
         updateMemo: builder.mutation<ApiResponse<Memo>, { memo_id: number } & Partial<MemoFormValues>>({
             query: ({ memo_id, ...body }) => ({ url: `memos/${memo_id}`, method: 'PUT', body }),
-            invalidatesTags: ['Memos', 'Dashboard'],
+            invalidatesTags: ['Memos', 'Procurements', 'Dashboard'],
         }),
 
         deleteMemo: builder.mutation<ApiResponse<null>, number>({
             query: (id) => ({ url: `memos/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['Memos', 'Dashboard'],
+            invalidatesTags: ['Memos', 'Procurements', 'Dashboard'],
         }),
     }),
 })

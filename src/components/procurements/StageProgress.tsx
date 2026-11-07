@@ -34,7 +34,7 @@ const StageProgress: React.FC<StageProgressProps> = ({ stages, currentStageId, i
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {phases.map((phase) => (
                 <div key={phase.group} className="rounded-lg border border-gray-100 p-3">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">{phase.group}</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{phase.group}</p>
                     <ol className="space-y-1.5">
                         {phase.stages.map((stage) => {
                             const state = stateOf(stage)
@@ -42,8 +42,8 @@ const StageProgress: React.FC<StageProgressProps> = ({ stages, currentStageId, i
                                 <li key={stage.stage_id} className="flex items-start gap-2 text-sm">
                                     {state === 'done' && <CircleCheck size={16} className="mt-0.5 shrink-0 text-green-700" aria-label="Done" />}
                                     {state === 'current' && <CircleDot size={16} className="mt-0.5 shrink-0 text-blue-700" aria-label="Current step" />}
-                                    {state === 'todo' && <Circle size={16} className="mt-0.5 shrink-0 text-gray-300" aria-label="Not yet" />}
-                                    <span className={state === 'current' ? 'font-semibold text-blue-900' : state === 'done' ? 'text-gray-700' : 'text-gray-400'}>
+                                    {state === 'todo' && <Circle size={16} className="mt-0.5 shrink-0 text-gray-400" aria-label="Not yet" />}
+                                    <span className={state === 'current' ? 'font-semibold text-blue-900' : state === 'done' ? 'text-gray-700' : 'text-gray-500'}>
                                         {stage.name}
                                         {state === 'current' && <span className="ml-1 text-xs font-normal text-blue-700">(now)</span>}
                                     </span>

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { toast } from 'sonner'
 import Modal from '../common/Modal'
+import EscalationFields from '../common/EscalationFields'
 import { FormActions, FormField, inputClass } from '../common/FormField'
 import { budgetLineApi } from '../../features/api/BudgetLineApi'
 import { procurementApi } from '../../features/api/ProcurementApi'
@@ -22,6 +23,10 @@ import { MEMO_STAGE_HEADERS, STEP_HEADERS, TENDER_STAGES } from '../../utils/she
  * The card that adds or edits one row of a sheet. It holds every column of the
  * row, in the sheet's order, and when editing each one starts with its current
  * value, so people can see what is there before changing it.
+ *
+ * The years of a budget row must add up to its Total Sum, so the row always
+ * balances. Expenditure Q1 to Q4 are what was actually paid, so they come from the
+ * payments recorded and are only shown here.
  *
  * A budget sheet row is a budget line plus the procurement that tracks it; an
  * All list follow-up is a procurement on its own. Total Sum, No of Days and
@@ -50,10 +55,6 @@ interface CardValues {
     quantity: number
     unit_price: number
     plan: Record<string, string>     // one amount per financial year, keyed "fy<id>"
-    q1_amount: string
-    q2_amount: string
-    q3_amount: string
-    q4_amount: string
     steps: Record<string, { status: string; date: string }>
     scm_officer_id: number | null
     acquisition_method_id: number | null
@@ -65,7 +66,7 @@ interface CardValues {
     notes: string | null
 }
 
-const QUARTERS = ['q1_amount', 'q2_amount', 'q3_amount', 'q4_amount'] as const
+const QUARTERS = ['q1_actual', 'q2_actual', 'q3_actual', 'q4_actual'] as const
 
 const amountOf = (value: string | undefined) => Number(value || 0)
 const amountText = (value: number | undefined) => (value ? String(value) : '')
@@ -90,13 +91,14 @@ const SheetRowCard: React.FC<SheetRowCardProps> = ({ open, onClose, kind, data, 
     const [createProcurement] = procurementApi.useCreateProcurementMutation()
     const [updateProcurement] = procurementApi.useUpdateProcurementMutation()
     const [recordStep] = procurementApi.useRecordStageEventMutation()
+    const [correctStep] = procurementApi.useCorrectStageEventMutation()
     const [deleteStep] = procurementApi.useDeleteStageEventMutation()
 
     const { register, handleSubmit, reset, watch, getValues, formState: { errors, isSubmitting } } = useForm<CardValues>()
 
     // Years with a plan on any line, and always the year being viewed
     const years = data.financial_years.filter((fy) => fy.fy_id === fyId || data.budget_lines.some((l) => l.allocations.some((a) => a.fy_id === fy.fy_id)))
-    const currentPlan = line?.allocations.find((a) => a.fy_id === fyId)
+    const paidThisYear = line?.actuals.find((a) => a.fy_id === fyId)
     const steps = data.stages.filter((s) => !TENDER_STAGES.includes(s.code))
 
     // Every field starts with what is stored, each time the card opens
@@ -113,13 +115,9 @@ const SheetRowCard: React.FC<SheetRowCardProps> = ({ open, onClose, kind, data, 
             quantity: line?.quantity ?? 1,
             unit_price: line?.unit_price ?? 0,
             plan: Object.fromEntries(years.map((fy) => [`fy${fy.fy_id}`, amountText(line?.allocations.find((a) => a.fy_id === fy.fy_id)?.planned_amount)])),
-            q1_amount: amountText(currentPlan?.q1_amount),
-            q2_amount: amountText(currentPlan?.q2_amount),
-            q3_amount: amountText(currentPlan?.q3_amount),
-            q4_amount: amountText(currentPlan?.q4_amount),
             steps: Object.fromEntries(steps.map((s) => [s.code, {
                 status: item?.steps[s.code]?.status ?? '',
-                date: toDateInput(item?.steps[s.code]?.event_date),
+                date: item?.steps[s.code]?.date_known ? toDateInput(item.steps[s.code]?.event_date) : '',
             }])),
             scm_officer_id: item?.scm_officer_id ?? null,
             acquisition_method_id: item?.acquisition_method_id ?? null,
@@ -140,23 +138,17 @@ const SheetRowCard: React.FC<SheetRowCardProps> = ({ open, onClose, kind, data, 
     const tenderDays = float && opening ? Math.round((new Date(opening).getTime() - new Date(float).getTime()) / 86400000) : null
     const escalated = watch('is_escalated') === 'Yes'
 
-    // Saves one figure group of a year's plan, only when it changed
+    // Saves each year's plan, only when it changed
     const saveYearPlans = async (budgetLineId: number, source: TrackerBudgetLine | undefined, values: CardValues) => {
         for (const fy of years) {
             const stored = source?.allocations.find((a) => a.fy_id === fy.fy_id)
             const planned = amountOf(values.plan[`fy${fy.fy_id}`])
-            const patch: Record<string, number> = {}
-            if (planned !== (stored?.planned_amount ?? 0)) patch.planned_amount = planned
-            if (fy.fy_id === fyId) {
-                for (const q of QUARTERS) {
-                    if (amountOf(values[q]) !== (stored?.[q] ?? 0)) patch[q] = amountOf(values[q])
-                }
-            }
-            if (Object.keys(patch).length > 0) await patchAllocation({ budget_line_id: budgetLineId, fy_id: fy.fy_id, ...patch }).unwrap()
+            if (planned !== (stored?.planned_amount ?? 0)) await patchAllocation({ budget_line_id: budgetLineId, fy_id: fy.fy_id, planned_amount: planned }).unwrap()
         }
     }
 
-    // Each changed step adds to the procurement's history; a step set back to blank removes its latest update
+    // A new outcome adds to the procurement's history and a different date corrects the
+    // update shown in the cell. A step set back to blank removes its latest update.
     const saveSteps = async (procurementId: number, values: CardValues) => {
         for (const stage of steps) {
             const stored = item?.steps[stage.code]
@@ -165,15 +157,22 @@ const SheetRowCard: React.FC<SheetRowCardProps> = ({ open, onClose, kind, data, 
                 if (stored) await deleteStep({ procurement_id: procurementId, event_id: stored.event_id }).unwrap()
                 continue
             }
-            const eventDate = date || todayInput()
-            if (status !== stored?.status || eventDate !== toDateInput(stored?.event_date)) {
-                await recordStep({ procurement_id: procurementId, stage_id: stage.stage_id, status: status as StageEventStatus, event_date: eventDate }).unwrap()
+            const storedDate = stored?.date_known ? toDateInput(stored.event_date) : ''
+            if (stored && date && date !== storedDate) {
+                await correctStep({ procurement_id: procurementId, event_id: stored.event_id, status: status as StageEventStatus, event_date: date }).unwrap()
+            } else if (status !== stored?.status) {
+                await recordStep({ procurement_id: procurementId, stage_id: stage.stage_id, status: status as StageEventStatus, event_date: date || todayInput() }).unwrap()
             }
         }
-        // A tender date also marks its step as done
+        // A tender date also marks its step as done, and clearing the date undoes that
         for (const [code, date] of [['TENDER_FLOATED', values.tender_float_date], ['TENDER_OPENED', values.tender_opening_date]] as const) {
             const stage = data.stages.find((s) => s.code === code)
-            if (stage && date && date !== toDateInput(item?.steps[code]?.event_date)) {
+            const stored = item?.steps[code]
+            if (!date) {
+                if (stored) await deleteStep({ procurement_id: procurementId, event_id: stored.event_id }).unwrap()
+            } else if (stored) {
+                if (date !== toDateInput(stored.event_date)) await correctStep({ procurement_id: procurementId, event_id: stored.event_id, status: 'Completed', event_date: date }).unwrap()
+            } else if (stage) {
                 await recordStep({ procurement_id: procurementId, stage_id: stage.stage_id, status: 'Completed', event_date: date }).unwrap()
             }
         }
@@ -317,19 +316,14 @@ const SheetRowCard: React.FC<SheetRowCardProps> = ({ open, onClose, kind, data, 
                                 <input type="number" min={0} step="0.01" className={inputClass} {...register(`plan.fy${fy.fy_id}`, {
                                     validate: () => {
                                         const planned = years.reduce((sum, y) => sum + amountOf(getValues(`plan.fy${y.fy_id}`)), 0)
-                                        return planned <= total || 'The years together cannot exceed the Total Sum'
+                                        return Math.round(planned * 100) === Math.round(total * 100) || `The years add up to ${formatMoney(planned)}, but must equal the Total Sum`
                                     },
                                 })} />
                             </FormField>
                         ))}
                         {QUARTERS.map((q, index) => (
-                            <FormField key={q} label={`Expenditure Q${index + 1}`} error={errors[q]?.message}>
-                                <input type="number" min={0} step="0.01" className={inputClass} {...register(q, {
-                                    validate: () => {
-                                        const quarters = QUARTERS.reduce((sum, field) => sum + amountOf(getValues(field)), 0)
-                                        return quarters <= amountOf(getValues(`plan.fy${fyId}`)) || "The quarters cannot add up to more than this year's plan"
-                                    },
-                                })} />
+                            <FormField key={q} label={`Expenditure Q${index + 1}`} hint="Worked out from the payments recorded">
+                                <p className="tabular py-2 text-sm font-semibold text-gray-900">{formatMoney(paidThisYear?.[q] ?? 0)}</p>
                             </FormField>
                         ))}
                     </Group>
@@ -380,15 +374,7 @@ const SheetRowCard: React.FC<SheetRowCardProps> = ({ open, onClose, kind, data, 
                 </Group>
 
                 <Group title="Escalation and notes">
-                    <FormField label="Escalated">
-                        <select className={inputClass} {...register('is_escalated')}>
-                            <option value="No">No</option>
-                            <option value="Yes">Yes</option>
-                        </select>
-                    </FormField>
-                    <FormField label="Escalated To">
-                        <input className={inputClass} disabled={!escalated} {...register('escalated_to', { setValueAs: optionalText })} />
-                    </FormField>
+                    <EscalationFields flag={register('is_escalated')} to={register('escalated_to', { setValueAs: optionalText })} escalated={escalated} current={item?.escalated_to} />
                     <FormField label="Escalation note" className="md:col-span-2">
                         <input className={inputClass} disabled={!escalated} {...register('escalation_note', { setValueAs: optionalText })} />
                     </FormField>

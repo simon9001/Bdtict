@@ -1,6 +1,6 @@
 import { baseApi, toQueryString } from './baseApi'
 import type {
-    ActivitySummary, AgeingBucket, ApiResponse, AttentionItem, CategoryBudget, DashboardBreakdowns, DashboardFilters, DashboardResponse,
+    ActivitySummary, AgeingBucket, ApiResponse, AttentionItem, BalanceChecks, CategoryBudget, DashboardBreakdowns, DashboardFilters, DashboardResponse,
     DashboardSummary, ExpiringContract, MonthlyTrend, OfficerWorkload, PipelineStage, QuarterSpend, RecentActivity, StageDuration,
     TopBudgetLine, YearComparison,
 } from '../../types/Types'
@@ -57,6 +57,11 @@ export const dashboardApi = baseApi.injectEndpoints({
         getBreakdowns: builder.query<DashboardResponse<DashboardBreakdowns>, DashboardFilters>({
             query: (filters) => `dashboard/breakdowns${toQueryString(filters)}`,
             providesTags: ['Dashboard'],
+        }),
+
+        getBalanceChecks: builder.query<DashboardResponse<BalanceChecks>, DashboardFilters>({
+            query: (filters) => `dashboard/balance-checks${toQueryString(filters)}`,
+            providesTags: ['Dashboard', 'BudgetLines', 'Contracts', 'Payments'],
         }),
 
         getActivitySummary: builder.query<DashboardResponse<ActivitySummary>, DashboardFilters>({

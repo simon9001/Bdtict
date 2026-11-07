@@ -3,6 +3,18 @@
   themes: light --default;
 }
 
+/* daisyUI's light theme, set to the app's green and with darker text so data reads clearly */
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #166534;          /* green-800, the app's main colour */
+  --color-primary-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #f8fafc;
+  --color-base-300: #e5e7eb;
+  --color-base-content: #111827;     /* gray-900 */
+}
+
 /*
  * Chart colour tokens - validated with the dataviz palette checker against the
  * white card surface (see src/components/charts/chartTheme.ts for usage).
@@ -24,7 +36,24 @@
 }
 
 body {
-  @apply bg-gray-50 text-gray-800;
+  @apply bg-gray-100 text-gray-900;
+}
+
+/*
+ * Tables: a solid header band with dark labels (daisyUI's default is faint grey),
+ * clear row lines and a light hover, so long sheets stay easy to follow.
+ */
+.table thead th {
+  @apply border-b border-gray-300 bg-gray-100 text-xs font-semibold text-gray-800;
+}
+.table tbody tr {
+  @apply border-b border-gray-200;
+}
+.table tbody td {
+  @apply text-gray-900;
+}
+.table tfoot td {
+  @apply border-t-2 border-gray-300;
 }
 
 /* Square checkboxes so they never look like radio buttons */

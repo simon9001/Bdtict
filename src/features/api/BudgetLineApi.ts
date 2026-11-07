@@ -40,7 +40,7 @@ export const budgetLineApi = baseApi.injectEndpoints({
         }),
 
         // Change one figure of a year's plan; the server keeps the others
-        patchAllocation: builder.mutation<ApiResponse<BudgetLineDetail>, { budget_line_id: number; fy_id: number; planned_amount?: number; q1_amount?: number; q2_amount?: number; q3_amount?: number; q4_amount?: number }>({
+        patchAllocation: builder.mutation<ApiResponse<BudgetLineDetail>, { budget_line_id: number; fy_id: number; planned_amount: number }>({
             query: ({ budget_line_id, fy_id, ...body }) => ({ url: `budget-lines/${budget_line_id}/allocations/${fy_id}`, method: 'PATCH', body }),
             invalidatesTags: ['BudgetLines', 'Dashboard'],
         }),

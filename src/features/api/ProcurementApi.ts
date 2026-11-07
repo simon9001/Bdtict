@@ -28,7 +28,7 @@ export const procurementApi = baseApi.injectEndpoints({
         // Update a procurement
         updateProcurement: builder.mutation<ApiResponse<ProcurementDetail>, { procurement_id: number } & Partial<ProcurementFormValues>>({
             query: ({ procurement_id, ...body }) => ({ url: `procurements/${procurement_id}`, method: 'PUT', body }),
-            invalidatesTags: ['Procurements', 'BudgetLines', 'Dashboard'],
+            invalidatesTags: ['Procurements', 'Memos', 'BudgetLines', 'Dashboard'],
         }),
 
         // Delete a procurement
@@ -40,13 +40,19 @@ export const procurementApi = baseApi.injectEndpoints({
         // Record a workflow step update
         recordStageEvent: builder.mutation<ApiResponse<ProcurementDetail>, { procurement_id: number } & StageEventFormValues>({
             query: ({ procurement_id, ...body }) => ({ url: `procurements/${procurement_id}/stages`, method: 'POST', body }),
-            invalidatesTags: ['Procurements', 'Dashboard'],
+            invalidatesTags: ['Procurements', 'Memos', 'Dashboard'],
+        }),
+
+        // Correct the date or outcome of a step update
+        correctStageEvent: builder.mutation<ApiResponse<ProcurementDetail>, { procurement_id: number; event_id: number; status: StageEventFormValues['status']; event_date: string }>({
+            query: ({ procurement_id, event_id, ...body }) => ({ url: `procurements/${procurement_id}/stages/${event_id}`, method: 'PUT', body }),
+            invalidatesTags: ['Procurements', 'Memos', 'Dashboard'],
         }),
 
         // Undo a step recorded by mistake
         deleteStageEvent: builder.mutation<ApiResponse<ProcurementDetail>, { procurement_id: number; event_id: number }>({
             query: ({ procurement_id, event_id }) => ({ url: `procurements/${procurement_id}/stages/${event_id}`, method: 'DELETE' }),
-            invalidatesTags: ['Procurements', 'Dashboard'],
+            invalidatesTags: ['Procurements', 'Memos', 'Dashboard'],
         }),
     }),
 })

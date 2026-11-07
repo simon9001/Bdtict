@@ -11,12 +11,13 @@ interface StatusStyle {
     icon: LucideIcon
 }
 
-const GREEN = 'bg-green-100 text-green-800'
-const BLUE = 'bg-blue-100 text-blue-800'
-const AMBER = 'bg-amber-100 text-amber-800'
-const RED = 'bg-red-100 text-red-800'
-const GRAY = 'bg-gray-100 text-gray-700'
-const PURPLE = 'bg-purple-100 text-purple-800'
+// Light fill, dark text and a thin outline of the same colour, so each pill stands out on white rows
+const GREEN = 'bg-green-50 text-green-800 ring-green-600/30'
+const BLUE = 'bg-blue-50 text-blue-800 ring-blue-600/30'
+const AMBER = 'bg-amber-50 text-amber-900 ring-amber-600/40'
+const RED = 'bg-red-50 text-red-800 ring-red-600/30'
+const GRAY = 'bg-gray-50 text-gray-700 ring-gray-500/30'
+const PURPLE = 'bg-purple-50 text-purple-800 ring-purple-600/30'
 
 const STYLES: Record<string, StatusStyle> = {
     // procurements / tasks
@@ -47,7 +48,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     const style = STYLES[status] ?? { className: GRAY, icon: CircleDashed }
     const Icon = style.icon
     return (
-        <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${style.className}`}>
+        <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${style.className}`}>
             <Icon size={12} aria-hidden />
             {status}
         </span>

@@ -29,15 +29,15 @@ const NAV_GROUPS: NavGroup[] = [
         ],
     },
     {
-        // One entry per sheet of the tracker workbook
+        // One entry per sheet of the tracker workbook, named and ordered as its tabs
         title: 'Tracker Sheets',
         items: [
-            { name: 'Assets: All list', path: '/tracker/all-list', icon: Table2 },
-            { name: 'Assets: Infra, Sw', path: '/tracker/assets-infra-sw', icon: Server },
+            { name: 'Lists', path: '/lists', icon: ListChecks },
+            { name: 'Procurement of Assets_All list', path: '/tracker/all-list', icon: Table2 },
+            { name: 'Procurement of Assets_Infra, Sw', path: '/tracker/assets-infra-sw', icon: Server },
             { name: 'Maintenance & Support', path: '/tracker/maintenance-support', icon: Wrench },
             { name: 'Consultancy', path: '/tracker/consultancy', icon: Lightbulb },
             { name: 'Subscription & Support', path: '/tracker/subscription-support', icon: Repeat },
-            { name: 'Lists', path: '/lists', icon: ListChecks },
         ],
     },
     {
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, collapsed, onNavigate }) 
             <nav className={`space-y-5 p-4 ${collapsed ? 'lg:space-y-3 lg:px-2' : ''}`}>
                 {groups.map((group, index) => (
                     <div key={group.title}>
-                        <p className={`mb-1 whitespace-nowrap px-3 text-xs font-semibold uppercase tracking-wide text-gray-400 ${collapsed ? 'lg:hidden' : ''}`}>{group.title}</p>
+                        <p className={`mb-1 whitespace-nowrap px-3 text-xs font-semibold uppercase tracking-wide text-gray-500 ${collapsed ? 'lg:hidden' : ''}`}>{group.title}</p>
                         {/* Icons only: a thin line replaces the group title */}
                         {collapsed && index > 0 && <hr className="mb-3 hidden border-gray-200 lg:block" />}
                         <div className="space-y-1">
@@ -112,7 +112,8 @@ const Sidebar: React.FC<SidebarProps> = ({ drawerOpen, collapsed, onNavigate }) 
                                     }
                                 >
                                     <Icon size={18} className="shrink-0" aria-hidden />
-                                    <span className={collapsed ? 'lg:hidden' : ''}>{name}</span>
+                                    {/* The longer sheet names wrap rather than being cut off */}
+                                    <span className={`whitespace-normal leading-snug ${collapsed ? 'lg:hidden' : ''}`}>{name}</span>
                                 </NavLink>
                             ))}
                         </div>

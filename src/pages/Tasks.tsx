@@ -6,7 +6,7 @@ import { taskApi } from '../features/api/TaskApi'
 import { useReferenceData } from '../hooks/useReferenceData'
 import { useUrlFilters } from '../hooks/useUrlFilters'
 import { useCurrentUser, useSelectedFy } from '../store/hooks'
-import { TASK_STATUSES, type Task, type TaskStatus } from '../types/Types'
+import { TASK_STATUSES, taskStatusLabel, type Task, type TaskStatus } from '../types/Types'
 import { canCreate, canEditOwned } from '../utils/permissions'
 import { confirmAction } from '../utils/confirm'
 import { getErrorMessage } from '../utils/errors'
@@ -80,7 +80,7 @@ const Tasks: React.FC = () => {
                     onChange={(e) => filters.setFilters({ status: ['', 'all'].includes(e.target.value) ? undefined : e.target.value, all: e.target.value === 'all' })}>
                     <option value="">Open tasks</option>
                     <option value="all">All tasks</option>
-                    {TASK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    {TASK_STATUSES.map((s) => <option key={s} value={s}>{taskStatusLabel(s)}</option>)}
                 </select>
                 <select className="select select-sm w-full border-gray-300 sm:w-48" value={filters.getNumber('owner_id') ?? ''} aria-label="Assigned to"
                     onChange={(e) => filters.setFilters({ owner_id: e.target.value, mine: undefined })}>
@@ -117,7 +117,7 @@ const Tasks: React.FC = () => {
                                                 <p className="font-medium text-gray-900">{task.title}</p>
                                                 {/* Status and due date have their own columns on wider screens */}
                                                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:hidden">
-                                                    <StatusBadge status={task.status} />
+                                                    <StatusBadge status={taskStatusLabel(task.status)} />
                                                     {task.due_date && <span className={task.is_overdue ? 'font-semibold text-red-700' : 'text-gray-500'}>Due {formatDate(task.due_date)}</span>}
                                                 </div>
                                                 {task.procurement_id && (
@@ -129,7 +129,7 @@ const Tasks: React.FC = () => {
                                             <td className={`hidden sm:table-cell whitespace-nowrap text-sm ${task.is_overdue ? 'font-semibold text-red-700' : ''}`}>
                                                 {formatDate(task.due_date)}{task.is_overdue && ' · overdue'}
                                             </td>
-                                            <td className="hidden sm:table-cell"><StatusBadge status={task.status} /></td>
+                                            <td className="hidden sm:table-cell"><StatusBadge status={taskStatusLabel(task.status)} /></td>
                                             <td className="whitespace-nowrap text-right">
                                                 {editable && (
                                                     <>

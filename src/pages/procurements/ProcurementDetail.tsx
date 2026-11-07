@@ -12,6 +12,7 @@ import { formatDate, formatDateTime, formatMoney } from '../../utils/format'
 import Card from '../../components/common/Card'
 import StatusBadge from '../../components/common/StatusBadge'
 import ProgressBar from '../../components/common/ProgressBar'
+import { taskStatusLabel } from '../../types/Types'
 import { EscalatedBadge, OverdueBadge } from '../../components/common/FlagBadges'
 import { IconButton, PrimaryButton, SecondaryButton } from '../../components/common/Buttons'
 import { EmptyState, ErrorState, LoadingState } from '../../components/common/States'
@@ -148,7 +149,7 @@ const ProcurementDetail: React.FC = () => {
                                             <StatusBadge status={event.status} />
                                         </div>
                                         {event.notes && <p className="mt-0.5 text-sm text-gray-600">{event.notes}</p>}
-                                        <p className="mt-0.5 text-xs text-gray-400">Recorded by {event.recorded_by_name} · {formatDateTime(event.created_at)}</p>
+                                        <p className="mt-0.5 text-xs text-gray-500">Recorded by {event.recorded_by_name} · {formatDateTime(event.created_at)}</p>
                                     </div>
                                     {editable && (
                                         <IconButton label="Remove this update" onClick={() => handleUndoStep(event.event_id, event.stage_name)}>
@@ -201,7 +202,7 @@ const ProcurementDetail: React.FC = () => {
                                     <span className="text-sm text-gray-900">{t.title}</span>
                                     <span className="flex items-center gap-2 text-xs text-gray-500">
                                         {t.due_date && `Due ${formatDate(t.due_date)}`}
-                                        <StatusBadge status={t.status} />
+                                        <StatusBadge status={taskStatusLabel(t.status)} />
                                     </span>
                                 </li>
                             ))}

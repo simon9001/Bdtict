@@ -1,4 +1,4 @@
-import { baseApi, toQueryString } from './baseApi'
+﻿import { baseApi, toQueryString } from './baseApi'
 import type {
     ApiResponse, Invoice, InvoiceDetail, InvoiceFormValues, InvoiceQuery, PaginatedResponse,
     PaymentFormValues, PaymentListResponse, PaymentQuery,
@@ -44,12 +44,12 @@ export const invoiceApi = baseApi.injectEndpoints({
         // Payments change invoice status (-> Paid) and contract/dashboard totals
         createPayment: builder.mutation<ApiResponse<{ payment_id: number }>, PaymentFormValues>({
             query: (body) => ({ url: 'payments', method: 'POST', body }),
-            invalidatesTags: ['Payments', 'Invoices', 'Contracts', 'Dashboard'],
+            invalidatesTags: ['Payments', 'BudgetLines', 'Invoices', 'Contracts', 'Dashboard'],
         }),
 
         deletePayment: builder.mutation<ApiResponse<null>, number>({
             query: (id) => ({ url: `payments/${id}`, method: 'DELETE' }),
-            invalidatesTags: ['Payments', 'Invoices', 'Contracts', 'Dashboard'],
+            invalidatesTags: ['Payments', 'BudgetLines', 'Invoices', 'Contracts', 'Dashboard'],
         }),
     }),
 })

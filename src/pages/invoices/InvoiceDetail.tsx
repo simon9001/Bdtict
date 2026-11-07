@@ -151,7 +151,7 @@ const InvoiceDetail: React.FC = () => {
                                             <td>{formatDate(pay.payment_date)}</td>
                                             <td>{pay.reference ?? '—'}{pay.notes && <p className="text-xs text-gray-500">{pay.notes}</p>}</td>
                                             <td className="tabular text-right font-medium">{formatMoney(pay.amount)}</td>
-                                            <td className="text-sm">{pay.created_by_name}<p className="text-xs text-gray-400">{formatDateTime(pay.created_at)}</p></td>
+                                            <td className="text-sm">{pay.created_by_name}<p className="text-xs text-gray-500">{formatDateTime(pay.created_at)}</p></td>
                                             {editable && (
                                                 <td className="text-right">
                                                     <IconButton label="Delete payment" tone="danger" onClick={() => handleDeletePayment(pay.payment_id)}><Trash2 size={15} /></IconButton>

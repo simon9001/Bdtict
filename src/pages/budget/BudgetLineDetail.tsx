@@ -18,8 +18,8 @@ import BudgetLineFormModal from '../../components/budget/BudgetLineFormModal'
 import AllocationModal from '../../components/budget/AllocationModal'
 
 /**
- * One budget line: its cost, how it is spread across financial years and
- * quarters, and the procurements buying it.
+ * One budget line: its cost, how it is spread across financial years, what was
+ * actually paid in each quarter, and the procurements buying it.
  */
 const BudgetLineDetail: React.FC = () => {
     const budgetLineId = Number(useParams().id)
@@ -108,10 +108,10 @@ const BudgetLineDetail: React.FC = () => {
                                 <tr>
                                     <th>Financial year</th>
                                     <th className="text-right">Planned</th>
-                                    <th className="text-right">Q1 Jul–Sep</th>
-                                    <th className="text-right">Q2 Oct–Dec</th>
-                                    <th className="text-right">Q3 Jan–Mar</th>
-                                    <th className="text-right">Q4 Apr–Jun</th>
+                                    <th className="text-right">Paid Q1 Jul–Sep</th>
+                                    <th className="text-right">Paid Q2 Oct–Dec</th>
+                                    <th className="text-right">Paid Q3 Jan–Mar</th>
+                                    <th className="text-right">Paid Q4 Apr–Jun</th>
                                     {editable && <th />}
                                 </tr>
                             </thead>
@@ -120,10 +120,10 @@ const BudgetLineDetail: React.FC = () => {
                                     <tr key={a.fy_id}>
                                         <td className="font-medium">FY {a.fy_code}</td>
                                         <td className="tabular text-right font-semibold">{formatMoney(a.planned_amount)}</td>
-                                        <td className="tabular text-right">{formatMoney(a.q1_amount)}</td>
-                                        <td className="tabular text-right">{formatMoney(a.q2_amount)}</td>
-                                        <td className="tabular text-right">{formatMoney(a.q3_amount)}</td>
-                                        <td className="tabular text-right">{formatMoney(a.q4_amount)}</td>
+                                        <td className="tabular text-right">{formatMoney(a.q1_actual ?? 0)}</td>
+                                        <td className="tabular text-right">{formatMoney(a.q2_actual ?? 0)}</td>
+                                        <td className="tabular text-right">{formatMoney(a.q3_actual ?? 0)}</td>
+                                        <td className="tabular text-right">{formatMoney(a.q4_actual ?? 0)}</td>
                                         {editable && (
                                             <td className="whitespace-nowrap text-right">
                                                 <IconButton label="Edit" onClick={() => setAllocationModal({ open: true, allocation: a })}><Pencil size={15} /></IconButton>

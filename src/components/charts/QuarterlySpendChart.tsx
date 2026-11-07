@@ -11,17 +11,16 @@ import ChartTooltip from './ChartTooltip'
 import { BAR_SIZE, CHROME, MONEY_COLORS, RADIUS_VERTICAL, tickStyle, legendText } from './chartTheme'
 
 /**
- * "Are we spending as planned?"
+ * "How much have we spent against the year's budget?"
  * Two views of the same numbers on ONE axis each (never a dual axis):
- *   per quarter - planned vs actual columns
- *   cumulative  - running totals as lines, shows whether spend is catching up
+ *   per quarter - actual spending columns
+ *   cumulative  - running total as a line, against the year's budget
  */
 
 const COLUMNS: TableColumn<QuarterSpend>[] = [
     { key: 'quarter', label: 'Quarter' },
-    { key: 'planned', label: 'Planned', align: 'right', format: (v) => formatMoney(v as number) },
     { key: 'actual', label: 'Actual (paid)', align: 'right', format: (v) => formatMoney(v as number) },
-    { key: 'cumulative_planned', label: 'Planned to date', align: 'right', format: (v) => formatMoney(v as number) },
+    { key: 'year_planned', label: "Year's budget", align: 'right', format: (v) => formatMoney(v as number) },
     { key: 'cumulative_actual', label: 'Paid to date', align: 'right', format: (v) => formatMoney(v as number) },
 ]
 
@@ -33,11 +32,11 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
     const small = useIsSmallScreen()
     const { data, isLoading, error } = dashboardApi.useGetQuarterlySpendQuery(filters)
     const rows = (data?.data ?? []).map((row) => ({ ...row, label: QUARTER_MONTHS[row.quarter] ?? row.quarter }))
-    const isEmpty = rows.every((row) => row.planned === 0 && row.actual === 0)
+    const isEmpty = rows.every((row) => row.year_planned === 0 && row.actual === 0)
     const navigate = useNavigate()
     const context = { ...drillContext(filters, data?.financial_year), quarter: undefined }
 
-    // Payments made in the quarter; the plan is on the budget lines
+    // Payments made in the quarter
     const paymentsIn = (row: { from_date: string; to_date: string }) => drillTo('/payments', context, { paid_from: row.from_date, paid_to: row.to_date })
     const openQuarter = (state: { activeTooltipIndex?: unknown }) => {
         const row = rows[Number(state?.activeTooltipIndex)]
@@ -55,12 +54,12 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
 
     return (
         <ChartCard
-            title="Planned vs actual spend"
-            subtitle="Quarterly plan from budget allocations vs payments made · click to see them"
+            title="Actual spend by quarter"
+            subtitle="Payments made, against the year's budget · click to see them"
             isLoading={isLoading}
             error={error}
             isEmpty={isEmpty}
-            emptyMessage="No quarterly plan or payments recorded for this year yet."
+            emptyMessage="No budget or payments recorded for this year yet."
             rows={rows}
             columns={COLUMNS}
             rowLink={paymentsIn}
@@ -77,14 +76,13 @@ const QuarterlySpendChart: React.FC<{ filters: DashboardFilters; className?: str
                     <BarChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }} barGap={2}>
                         {axes}
                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.04)' }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
-                        <Bar isAnimationActive={false} dataKey="planned" name="Planned" fill={MONEY_COLORS.planned} barSize={BAR_SIZE * 2} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={() => navigate(drillTo('/budget-lines', context))} />
                         <Bar isAnimationActive={false} dataKey="actual" name="Actual (paid)" fill={MONEY_COLORS.actual} barSize={BAR_SIZE * 2} radius={RADIUS_VERTICAL} className="cursor-pointer" onClick={(entry) => navigate(paymentsIn(entry.payload as typeof rows[number]))} />
                     </BarChart>
                 ) : (
                     <LineChart data={rows} margin={{ top: 4, right: 16, bottom: 0, left: 0 }} className="cursor-pointer" onClick={openQuarter}>
                         {axes}
                         <Tooltip cursor={{ stroke: CHROME.axis }} content={(props) => <ChartTooltip {...props} formatValue={formatMoney} />} />
-                        <Line isAnimationActive={false} dataKey="cumulative_planned" name="Planned to date" stroke={MONEY_COLORS.planned} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                        <Line isAnimationActive={false} dataKey="year_planned" name="Year's budget" stroke={MONEY_COLORS.planned} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
                         <Line isAnimationActive={false} dataKey="cumulative_actual" name="Paid to date" stroke={MONEY_COLORS.actual} strokeWidth={2} dot={{ r: 4, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
                     </LineChart>
                 )}

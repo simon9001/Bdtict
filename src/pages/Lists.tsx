@@ -147,7 +147,7 @@ const Lists: React.FC = () => {
                                                             )}
                                                             {canEdit && (
                                                                 <button type="button" aria-label={`Remove ${lookup.value}`} title="Remove from this list" onClick={() => remove(lookup)}
-                                                                    className="shrink-0 rounded p-0.5 text-gray-300 hover:bg-red-50 hover:text-red-700 focus:text-red-700">
+                                                                    className="shrink-0 rounded p-0.5 text-gray-500 hover:bg-red-50 hover:text-red-700 focus:text-red-700">
                                                                     <X size={12} aria-hidden />
                                                                 </button>
                                                             )}

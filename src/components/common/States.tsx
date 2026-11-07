@@ -25,7 +25,7 @@ export const ErrorState: React.FC<{ error?: unknown; onRetry?: () => void }> = (
 
 export const EmptyState: React.FC<{ message: string; action?: React.ReactNode }> = ({ message, action }) => (
     <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-gray-500">
-        <Inbox size={40} className="text-gray-300" aria-hidden />
+        <Inbox size={40} className="text-gray-400" aria-hidden />
         <p className="text-sm">{message}</p>
         {action}
     </div>

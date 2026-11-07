@@ -4,6 +4,7 @@ import { ClipboardList, ListTodo, TriangleAlert } from 'lucide-react'
 import { procurementApi } from '../features/api/ProcurementApi'
 import { taskApi } from '../features/api/TaskApi'
 import { useCurrentUser, useSelectedFy } from '../store/hooks'
+import { taskStatusLabel } from '../types/Types'
 import { formatDate } from '../utils/format'
 import PageHeader from '../components/common/PageHeader'
 import Card from '../components/common/Card'
@@ -75,7 +76,7 @@ const MyWork: React.FC = () => {
                                 <li key={t.task_id} className="px-5 py-3">
                                     <p className="text-sm font-medium text-gray-900">{t.title}</p>
                                     <div className="mt-1 flex items-center gap-2 text-xs">
-                                        <StatusBadge status={t.status} />
+                                        <StatusBadge status={taskStatusLabel(t.status)} />
                                         {t.due_date && <span className={t.is_overdue ? 'font-semibold text-red-700' : 'text-gray-500'}>Due {formatDate(t.due_date)}</span>}
                                     </div>
                                 </li>

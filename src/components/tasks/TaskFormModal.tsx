@@ -2,12 +2,13 @@ import React, { useEffect } from 'react'
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { toast } from 'sonner'
 import Modal from '../common/Modal'
+import EscalationFields from '../common/EscalationFields'
 import { FormActions, FormField, inputClass } from '../common/FormField'
 import { optionalId, optionalText } from '../../utils/form'
 import { taskApi } from '../../features/api/TaskApi'
 import { useReferenceData } from '../../hooks/useReferenceData'
 import { useCurrentUser } from '../../store/hooks'
-import { TASK_STATUSES, type Task, type TaskFormValues } from '../../types/Types'
+import { TASK_STATUSES, taskStatusLabel, type Task, type TaskFormValues } from '../../types/Types'
 import { getErrorMessage } from '../../utils/errors'
 import { toDateInput } from '../../utils/format'
 import { isAdmin } from '../../utils/permissions'
@@ -20,15 +21,18 @@ interface TaskFormModalProps {
     defaultSectionId?: number // new rows added from a sheet section
 }
 
+// Escalated is "Yes" or "No" in the form, as on the sheet
+type TaskCardValues = Omit<TaskFormValues, 'is_escalated'> & { is_escalated: string }
+
 // Create or edit a follow-up task
 const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, procurementId, defaultSectionId }) => {
     const user = useCurrentUser()
-    const { priorities, sections, staff } = useReferenceData()
+    const { categories, priorities, sections, staff } = useReferenceData()
     const isEdit = !!task
 
     const [createTask, { isLoading: creating }] = taskApi.useCreateTaskMutation()
     const [updateTask, { isLoading: updating }] = taskApi.useUpdateTaskMutation()
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<TaskFormValues>()
+    const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<TaskCardValues>()
 
     useEffect(() => {
         if (!open) return
@@ -40,12 +44,17 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
             priority_id: task.priority_id,
             section_id: task.section_id,
             due_date: toDateInput(task.due_date) || null,
+            category_id: task.category_id,
             status: task.status,
-        } : { owner_id: user?.user_id, procurement_id: procurementId ?? null, section_id: defaultSectionId ?? null, status: 'Open' })
+            is_escalated: task.is_escalated ? 'Yes' : 'No',
+            escalated_to: task.escalated_to,
+        } : { owner_id: user?.user_id, procurement_id: procurementId ?? null, section_id: defaultSectionId ?? null, status: 'Open', is_escalated: 'No', escalated_to: null })
     }, [open, task, procurementId, user, reset, defaultSectionId])
 
-    const onSubmit: SubmitHandler<TaskFormValues> = async (values) => {
-        const body = isAdmin(user) ? values : { ...values, owner_id: undefined }
+    const onSubmit: SubmitHandler<TaskCardValues> = async (values) => {
+        const escalated = values.is_escalated === 'Yes'
+        const fields = { ...values, is_escalated: escalated, escalated_to: escalated ? values.escalated_to : null }
+        const body = isAdmin(user) ? fields : { ...fields, owner_id: undefined }
         try {
             if (isEdit) await updateTask({ task_id: task.task_id, ...body }).unwrap()
             else await createTask(body).unwrap()
@@ -64,7 +73,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
                         {...register('title', { required: 'Task is required', minLength: { value: 3, message: 'At least 3 characters' } })} />
                 </FormField>
 
-                <FormField label="Details">
+                <FormField label="Notes">
                     <textarea rows={3} className={inputClass} {...register('description', { setValueAs: optionalText })} />
                 </FormField>
 
@@ -78,6 +87,12 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
                             {priorities.map((p) => <option key={p.lookup_id} value={p.lookup_id}>{p.value}</option>)}
                         </select>
                     </FormField>
+                    <FormField label="Category">
+                        <select className={inputClass} {...register('category_id', { setValueAs: optionalId })}>
+                            <option value="">—</option>
+                            {categories.map((c) => <option key={c.lookup_id} value={c.lookup_id}>{c.value}</option>)}
+                        </select>
+                    </FormField>
                     <FormField label="Tracker section">
                         <select className={inputClass} {...register('section_id', { setValueAs: optionalId })}>
                             <option value="">—</option>
@@ -86,7 +101,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
                     </FormField>
                     <FormField label="Status">
                         <select className={inputClass} {...register('status')}>
-                            {TASK_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                            {TASK_STATUSES.map((s) => <option key={s} value={s}>{taskStatusLabel(s)}</option>)}
                         </select>
                     </FormField>
                     {isAdmin(user) && (
@@ -96,6 +111,7 @@ const TaskFormModal: React.FC<TaskFormModalProps> = ({ open, onClose, task, proc
                             </select>
                         </FormField>
                     )}
+                    <EscalationFields flag={register('is_escalated')} to={register('escalated_to', { setValueAs: optionalText })} escalated={watch('is_escalated') === 'Yes'} current={task?.escalated_to} />
                 </div>
 
                 <FormActions onCancel={onClose} isSaving={creating || updating} submitLabel={isEdit ? 'Save changes' : 'Create task'} />
